@@ -5,7 +5,7 @@ compiler:
 before_install:
   - echo $LANG
   - echo $LC_ALL
-script: scons -c && scons && ./bin/test && ./bin/mna ./data/simples.net && ./bin/mna ./data/simple_tran.net
+install: make
 branches:
   only:
     - mkdir build
