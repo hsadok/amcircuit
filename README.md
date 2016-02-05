@@ -1,4 +1,5 @@
 # AMCircuit
+[![Build Status](https://travis-ci.org/hugombarreto/amcircuit.svg?branch=master)](https://travis-ci.org/hugombarreto/amcircuit)
 
 AMCircuit is a circuit analysis program using Adams-Moulton implicit methods for time analysis.
 
