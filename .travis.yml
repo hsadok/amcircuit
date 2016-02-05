@@ -1,0 +1,22 @@
+language: cpp
+compiler:
+  - gcc
+  - clang
+before_install:
+  - echo $LANG
+  - echo $LC_ALL
+script: scons -c && scons && ./bin/test && ./bin/mna ./data/simples.net && ./bin/mna ./data/simple_tran.net
+branches:
+  only:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make
+notifications:
+  recipients:
+    - hugombarreto@gmail.com
+  email:
+    on_success: change
+    on_failure: always
+os:
+  - linux
