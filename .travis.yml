@@ -5,13 +5,15 @@ compiler:
 before_install:
   - echo $LANG
   - echo $LC_ALL
-install: make
+install:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - make
 branches:
   only:
-    - mkdir build
-    - cd build
-    - cmake ..
-    - make
+    - master
+    - dev
 notifications:
   recipients:
     - hugombarreto@gmail.com
