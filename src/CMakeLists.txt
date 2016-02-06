@@ -1,8 +1,6 @@
 file (GLOB_RECURSE PROJECT_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
 set (PROJECT_BIN ${PROJECT_NAME})
-if (APPLE)
-    cmake_policy(SET CMP0042 NEW)
-endif()
+
 if (NOT DEFINED PROJECT_BUILD_SHARED)
     if (CMAKE_CROSSCOMPILING)
         set(PROJECT_BUILD_SHARED 0)
@@ -28,3 +26,7 @@ if (PROJECT_BUILD_SHARED)
     set_target_properties(sharedlib PROPERTIES VERSION "${APPLICATION_VERSION_MAJOR}.${APPLICATION_VERSION_MINOR}" OUTPUT_NAME ${PROJECT_BIN} CLEAN_DIRECT_OUTPUT 1)
     install(TARGETS sharedlib DESTINATION lib)
 endif(PROJECT_BUILD_SHARED)
+
+link_directories(${MAINFOLDER}/lib)
+add_executable(${PROJECT_BIN}_main ${PROJECT_SRCS})
+add_custom_target(main "${MAINFOLDER}/${PROJECT_BIN}_main" DEPENDS ${PROJECT_BIN}_main COMMENT "Creating main..." VERBATIM SOURCES ${PROJECT_SRCS})
