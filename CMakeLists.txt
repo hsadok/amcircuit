@@ -27,7 +27,7 @@ endif()
 #
 # Debugging Options
 #
-set (CMAKE_VERBOSE_MAKEFILE 0) # Use 1 for debugging, 0 for release
+set (CMAKE_VERBOSE_MAKEFILE 1) # Use 1 for debugging, 0 for release
 
 
 #
