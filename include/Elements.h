@@ -6,46 +6,53 @@
 #define AMCIRCUIT_ELEMENT_H
 
 #include <string>
+#include <sstream>
 
 #include "AMCircuit.h"
+#include "Signal.h"
 
 namespace amcircuit {
 
 class Element {
-public:
-  Element(const std::string& name);
+ public:
+  Element(const std::string& params);
+  virtual ~Element() = 0;
+
   Element(const Element& other);
   Element& operator=(const Element& other);
-  virtual ~Element() = 0;
-private:
-  const std::string name;
+
+  static Element* get_element(const std::string& element_string);
+ protected:
+  std::string name;
+  std::stringstream line_stream;
 };
 
 class DoubleTerminalElement : public Element {
-public:
+ public:
   DoubleTerminalElement(const std::string& name, int node1, int node2);
-private:
+  DoubleTerminalElement(const std::string& params);
+ protected:
   int node1;
   int node2;
 };
 
 class SimpleSourceElement : public Element {
-public:
-  SimpleSourceElement(const std::string& name);
-private:
-  amc_float node_p;
-  amc_float node_n;
-  class Value {
-  public:
-    enum Behaviours { DC, SIN, PULSE };
-  };
+ public:
+  SimpleSourceElement(const std::string& name, int node_p, int node_n,
+                      Signal* signal);
+  SimpleSourceElement(const std::string& params);
+ protected:
+  int node_p;
+  int node_n;
+  Signal* signal;
 };
 
 class ControlledElement : public Element {
-public:
+ public:
   ControlledElement(const std::string& name, int node_p, int node_n,
                     int node_ctrl_p, int node_ctrl_n);
-private:
+  ControlledElement(const std::string& params);
+ protected:
   int node_p;
   int node_n;
   int node_ctrl_p;
@@ -53,99 +60,117 @@ private:
 };
 
 class Resistor : public DoubleTerminalElement {
-public:
+ public:
   Resistor(const std::string& name, int node1, int node2, amc_float R);
-private:
+  explicit Resistor(const std::string& params);
+ protected:
   amc_float R;
 };
 
 class NonLinearResistor : public DoubleTerminalElement {
-public:
+ public:
   NonLinearResistor(const std::string& name, int node1, int node2,
-                    std::vector<amc_float> R);
-private:
+                    const std::vector<amc_float>& R);
+  explicit NonLinearResistor(const std::string& params);
+ protected:
   std::vector<amc_float> R;
 };
 
 class VoltageControlledSwitch : public ControlledElement {
-public:
+ public:
   VoltageControlledSwitch(const std::string& name, int node_p, int node_n,
                           int node_ctrl_p, int node_ctrl_n, amc_float g_on,
                           amc_float g_off, amc_float v_ref);
-private:
+  explicit VoltageControlledSwitch(const std::string& params);
+ protected:
   amc_float g_on;
   amc_float g_off;
   amc_float v_ref;
 };
 
 class Inductor : public DoubleTerminalElement {
-public:
-  Inductor(const std::string& name, const std::string& params);
-private:
+ public:
+  Inductor(const std::string& name, int node1, int node2, amc_float L,
+           amc_float initial_current);
+  explicit Inductor(const std::string& params);
+ protected:
   amc_float L;
   amc_float initial_current;
 };
 
 class Capacitor : public DoubleTerminalElement {
-public:
-  Capacitor(const std::string& name, const std::string& params);
-private:
+ public:
+  Capacitor(const std::string& name, int node1, int node2, amc_float C,
+            amc_float initial_voltage);
+  explicit Capacitor(const std::string& params);
+ protected:
   amc_float C;
   amc_float initial_voltage;
 };
 
 class VoltageControlledVoltageSource : public ControlledElement {
-public:
-  VoltageControlledVoltageSource(const std::string& name,
-                                 const std::string& params);
-private:
+ public:
+  VoltageControlledVoltageSource(const std::string& name, int node_p,
+                                 int node_n, int node_ctrl_p, int node_ctrl_n,
+                                 amc_float Av);
+  explicit VoltageControlledVoltageSource(const std::string& params);
+ protected:
   amc_float Av;
 };
 
 class CurrentControlledCurrentSource : public ControlledElement {
-public:
-  CurrentControlledCurrentSource(const std::string& name,
-                                 const std::string& params);
-private:
+ public:
+  CurrentControlledCurrentSource(const std::string& name, int node_p,
+                                 int node_n, int node_ctrl_p, int node_ctrl_n,
+                                 amc_float Ai);
+  explicit CurrentControlledCurrentSource(const std::string& params);
+ protected:
   amc_float Ai;
 };
 
 class VoltageControlledCurrentSource : public ControlledElement {
-public:
-  VoltageControlledCurrentSource(const std::string& name,
-                                 const std::string& params);
-private:
+ public:
+  VoltageControlledCurrentSource(const std::string& name, int node_p,
+                                 int node_n, int node_ctrl_p, int node_ctrl_n,
+                                 amc_float Gm);
+  explicit VoltageControlledCurrentSource(const std::string& params);
+ protected:
   amc_float Gm;
 };
 
 class CurrentControlledVoltageSource : public ControlledElement {
-public:
-  CurrentControlledVoltageSource(const std::string& name,
-                                 const std::string& params);
-private:
+ public:
+  CurrentControlledVoltageSource(const std::string& name, int node_p,
+                                 int node_n, int node_ctrl_p, int node_ctrl_n,
+                                 amc_float Rm);
+  explicit CurrentControlledVoltageSource(const std::string& params);
+ protected:
   amc_float Rm;
 };
 
 class CurrentSource : public SimpleSourceElement {
-public:
-  CurrentSource(const std::string& name,
-                const std::string& params);
-private:
-
+ public:
+  CurrentSource(const std::string& name, int node_p, int node_n,Signal* signal);
+  explicit CurrentSource(const std::string& params);
 };
 
 class VoltageSource : public SimpleSourceElement {
-public:
-  VoltageSource(const std::string& name,
-                const std::string& params);
+ public:
+  VoltageSource(const std::string& name, int node_p, int node_n,Signal* signal);
+  explicit VoltageSource(const std::string& params);
 };
 
 class IdealOpAmp : public Element {
-public:
-  IdealOpAmp(const std::string& name,
-             const std::string& params);
+ public:
+  IdealOpAmp(const std::string& name, int out_p, int out_n, int in_p, int in_n);
+  IdealOpAmp(const std::string& params);
+ protected:
+  int out_p;
+  int out_n;
+  int in_p;
+  int in_n;
 };
 
-}
+} // namespace amcircuit
 
 #endif //AMCIRCUIT_ELEMENT_H
