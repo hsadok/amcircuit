@@ -3,6 +3,8 @@
 //
 
 #include "Signal.h"
+#include "helpers.h"
+#include "AMCircuitException.h"
 
 namespace amcircuit {
 
@@ -10,17 +12,19 @@ Signal::Signal() { }
 
 Signal::Signal(const std::string& params) : line_stream(params) { }
 
-inline Signal::~Signal() { };
+inline Signal::~Signal() { }
 
-Signal* Signal::get_signal(const std::string params) {
-  //DC
-  //SIN
-  //PULSE
+Signal::Handler Signal::get_signal(const std::string params) {
+  std::string upper_params(params); // TODO str_upper
+  if (upper_params == "DC") return Handler(new DC(params));
+  else if (upper_params == "SIN") return Handler(new Sin(params));
+  else if (upper_params == "PULSE") return Handler(new Pulse(params));
+  throw BadElementString("Invalid string \"" + params + "\"");
 }
 
 DC::DC(const amc_float value) : value(value) { }
 
-DC::DC(const std::string& params) {
+DC::DC(const std::string& params) : Signal(params) {
   line_stream >> value;
 }
 
@@ -31,7 +35,7 @@ Sin::Sin(amc_float offset, amc_float amplitude, amc_float freq_hz,
       time_delay(time_delay), damping_factor(damping_factor),
       phase_deg(phase_deg), cycles(cycles) { }
 
-Sin::Sin(const std::string& params) {
+Sin::Sin(const std::string& params) : Signal(params) {
   line_stream >> offset >> amplitude >> freq_hz >> time_delay >>
       damping_factor >> phase_deg >> cycles;
 }
@@ -43,7 +47,7 @@ Pulse::Pulse(amc_float initial, amc_float pulsed, amc_float delay_time,
       rise_time(rise_time), fall_time(fall_time), pulse_width(pulse_width),
       period(period), cycles(cycles) { }
 
-Pulse::Pulse(const std::string& params) {
+Pulse::Pulse(const std::string& params) : Signal(params) {
   line_stream >> initial >> pulsed >> delay_time >> rise_time >> fall_time >>
       pulse_width >> period >> cycles;
 }

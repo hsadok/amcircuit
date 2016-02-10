@@ -9,19 +9,25 @@
 #include <sstream>
 
 #include "AMCircuit.h"
+#include "ResourceHandler.h"
 
 namespace amcircuit {
 
 class Signal {
  public:
   Signal();
-  explicit Signal(const std::string& params);
+  Signal(const std::string& params);
   virtual ~Signal() = 0;
-  explicit Signal(const Signal& other);
-  Signal& operator=(const Signal& other);
-  static Signal* get_signal(const std::string params);
+
+  typedef ResourceHandler<Signal> Handler;
+  static Signal::Handler get_signal(const std::string params);
+
  protected:
   std::stringstream line_stream;
+
+ private:
+  explicit Signal(const Signal& other);
+  Signal& operator=(const Signal& other);
 };
 
 class DC : public Signal {
