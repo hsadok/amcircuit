@@ -2,7 +2,7 @@
 // Created by Hugo Sadok on 2/6/16.
 //
 #include "catch.hpp"
-
+#include <string>
 #include "Netlist.h"
 
 using namespace amcircuit;
@@ -14,7 +14,7 @@ SCENARIO( "netlist should be correctly processed from a file", "[netlist]" ) {
 
         WHEN( "specifying a nonexistent file" ) {
             THEN( "it should raise an exception" ) {
-                REQUIRE_THROWS(Netlist("kasjhcsakjhbcaslkj"));
+                REQUIRE_THROWS(Netlist(std::string("kasjhcsakjhbcaslkj")));
             }
         }
         WHEN( "provided with the correct netlist file" ) {
@@ -23,11 +23,6 @@ SCENARIO( "netlist should be correctly processed from a file", "[netlist]" ) {
                 // 6 resistors
                 // 2 AmpOp
                 // 1 power supply
-            }
-        }
-        WHEN( "netlist is greater than max size" ) {
-            THEN( "it should raise an exception" ) {
-                REQUIRE_THROWS(Netlist(netlistFileName, 3));
             }
         }
     }
