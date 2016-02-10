@@ -3,10 +3,9 @@
 //
 
 #include <iostream>
-#include "AMCircuit.h"
+//#include "AMCircuit.h"
 
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   std::cout << "Hello World!" << std::endl;
   std::cout << "argc: " << argc << "    argv[0]: " << argv[0] << std::endl;
   return 0;
