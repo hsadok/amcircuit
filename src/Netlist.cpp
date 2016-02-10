@@ -7,6 +7,7 @@
 
 #include "Netlist.h"
 #include "AMCircuitException.h"
+#include "helpers.h"
 
 namespace amcircuit {
 
@@ -54,8 +55,7 @@ void Netlist::handle_line(const std::string& line) {
       }
     }
   } catch (BadElementString e) {
-    throw BadFileException("Line: " + std::to_string(current_line) + "  " +
-                           e.what());
+    throw BadFileException("Line: " + to_str(current_line) + "  " + e.what());
   }
   current_line++;
 }
