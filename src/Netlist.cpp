@@ -28,10 +28,10 @@ Netlist::Netlist(const std::string& file_name) :
 //}
 
 void Netlist::process_file() {
-  std::ifstream data(file_name);
+  std::ifstream data(file_name.c_str());
   if (!data) throw FileNotFound("Cannot open file \"" + file_name + "\"");
   std::string line;
-  title = std::getline(data, line);
+  std::getline(data, title);
   while (std::getline(data, line)) {
     handle_line(line);
   }
