@@ -9,7 +9,7 @@ namespace amcircuit {
 
 typedef double amc_float; // defining type for better control over precision
 
-}
+} // namespace amcircuit
 
 #endif //AMCIRCUIT_AMCIRCUIT_H
 
