@@ -5,6 +5,7 @@
 #ifndef AMCIRCUIT_AMCIRCUITEXCEPTION_H
 #define AMCIRCUIT_AMCIRCUITEXCEPTION_H
 
+#include <stdexcept>
 #include <string>
 
 namespace amcircuit {
