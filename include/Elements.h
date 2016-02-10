@@ -10,6 +10,7 @@
 
 #include "AMCircuit.h"
 #include "Signal.h"
+#include "ResourceHandler.h"
 
 namespace amcircuit {
 
@@ -18,13 +19,16 @@ class Element {
   Element(const std::string& params);
   virtual ~Element() = 0;
 
-  Element(const Element& other);
-  Element& operator=(const Element& other);
+  typedef ResourceHandler<Element> Handler;
+  static Element::Handler get_element(const std::string& element_string);
 
-  static Element* get_element(const std::string& element_string);
  protected:
   std::string name;
   std::stringstream line_stream;
+
+ private:
+  Element(const Element& other);
+  Element& operator=(const Element& other);
 };
 
 class DoubleTerminalElement : public Element {
@@ -39,12 +43,12 @@ class DoubleTerminalElement : public Element {
 class SimpleSourceElement : public Element {
  public:
   SimpleSourceElement(const std::string& name, int node_p, int node_n,
-                      Signal* signal);
+                      Signal::Handler signal);
   SimpleSourceElement(const std::string& params);
  protected:
   int node_p;
   int node_n;
-  Signal* signal;
+  Signal::Handler signal;
 };
 
 class ControlledElement : public Element {
@@ -150,13 +154,15 @@ class CurrentControlledVoltageSource : public ControlledElement {
 
 class CurrentSource : public SimpleSourceElement {
  public:
-  CurrentSource(const std::string& name, int node_p, int node_n,Signal* signal);
+  CurrentSource(const std::string& name, int node_p, int node_n,
+                Signal::Handler signal);
   explicit CurrentSource(const std::string& params);
 };
 
 class VoltageSource : public SimpleSourceElement {
  public:
-  VoltageSource(const std::string& name, int node_p, int node_n,Signal* signal);
+  VoltageSource(const std::string& name, int node_p, int node_n,
+                Signal::Handler signal);
   explicit VoltageSource(const std::string& params);
 };
 

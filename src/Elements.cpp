@@ -3,7 +3,6 @@
 //
 
 #include <vector>
-#include <ctype.h>
 
 #include "Elements.h"
 #include "AMCircuitException.h"
@@ -16,24 +15,20 @@ Element::Element(const std::string& params) : line_stream(params) {
 
 inline Element::~Element() { } // not to be implemented
 
-Element::Element(const Element& other) { }
-
-Element& Element::operator=(const Element& other) { }
-
-Element* Element::get_element(const std::string& element_string) {
-  switch (toupper(element_string[0])) {
-    case 'R': return new Resistor(element_string);
-    case 'N': return new NonLinearResistor(element_string);
-    case '$': return new VoltageControlledSwitch(element_string);
-    case 'L': return new Inductor(element_string);
-    case 'C': return new Capacitor(element_string);
-    case 'E': return new VoltageControlledVoltageSource(element_string);
-    case 'F': return new CurrentControlledCurrentSource(element_string);
-    case 'G': return new VoltageControlledCurrentSource(element_string);
-    case 'H': return new CurrentControlledVoltageSource(element_string);
-    case 'I': return new CurrentSource(element_string);
-    case 'V': return new VoltageSource(element_string);
-    case 'O': return new IdealOpAmp(element_string);
+Element::Handler Element::get_element(const std::string& element_string) {
+  switch (::toupper(element_string[0])) {
+    case 'R': return Handler(new Resistor(element_string));
+    case 'N': return Handler(new NonLinearResistor(element_string));
+    case '$': return Handler(new VoltageControlledSwitch(element_string));
+    case 'L': return Handler(new Inductor(element_string));
+    case 'C': return Handler(new Capacitor(element_string));
+    case 'E': return Handler(new VoltageControlledVoltageSource(element_string));
+    case 'F': return Handler(new CurrentControlledCurrentSource(element_string));
+    case 'G': return Handler(new VoltageControlledCurrentSource(element_string));
+    case 'H': return Handler(new CurrentControlledVoltageSource(element_string));
+    case 'I': return Handler(new CurrentSource(element_string));
+    case 'V': return Handler(new VoltageSource(element_string));
+    case 'O': return Handler(new IdealOpAmp(element_string));
     default:break;
   }
   throw BadElementString("Invalid string \"" + element_string + "\"");
@@ -49,7 +44,7 @@ DoubleTerminalElement::DoubleTerminalElement(const std::string& params)
 }
 
 SimpleSourceElement::SimpleSourceElement(const std::string& name, int node_p,
-                                         int node_n, Signal* signal)
+                                         int node_n, Signal::Handler signal)
     : Element(name), node_p(node_p), node_n(node_n), signal(signal) { }
 
 SimpleSourceElement::SimpleSourceElement(const std::string& params)
@@ -157,14 +152,14 @@ CurrentControlledVoltageSource::CurrentControlledVoltageSource(
 }
 
 CurrentSource::CurrentSource(const std::string& name, int node_p, int node_n,
-                             Signal* signal)
+                             Signal::Handler signal)
     : SimpleSourceElement(name, node_p, node_n, signal) { }
 
 CurrentSource::CurrentSource(const std::string& params)
     : SimpleSourceElement(params) { }
 
 VoltageSource::VoltageSource(const std::string& name, int node_p, int node_n,
-                             Signal* signal)
+                             Signal::Handler signal)
     : SimpleSourceElement(name, node_p, node_n, signal) { }
 
 VoltageSource::VoltageSource(const std::string& params)
