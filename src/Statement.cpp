@@ -16,7 +16,7 @@ Statement::Statement(const std::string& params) : line_stream(params) {}
 
 inline Statement::~Statement() { }
 
-Statement::Handler get_statement(std::string params) {
+Statement::Handler Statement::get_statement(std::string params) {
   if (params[0] == '.') {
     params = params.substr(1, std::string::npos);
   }
