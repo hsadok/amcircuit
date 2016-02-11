@@ -14,19 +14,6 @@ class ResourceHandler {
   ResourceHandler(T* resource_ptr) : resource_ptr(resource_ptr) {
     ref_counter = new int(1);
   }
-  void add(const ResourceHandler& other) {
-    ref_counter = other.ref_counter;
-    resource_ptr = other.resource_ptr;
-    (*ref_counter)++;
-  }
-  void remove() {
-    if (*ref_counter > 1) {
-      (*ref_counter)--;
-    } else {
-      delete resource_ptr;
-      delete ref_counter;
-    }
-  }
   ResourceHandler(const ResourceHandler& other) {
     add(other);
   }
@@ -45,9 +32,26 @@ class ResourceHandler {
   T* operator->() {
     return resource_ptr;
   }
+  T& operator*() {
+    return *resource_ptr;
+  }
  private:
   T* resource_ptr;
   int* ref_counter;
+
+  void add(const ResourceHandler& other) {
+    ref_counter = other.ref_counter;
+    resource_ptr = other.resource_ptr;
+    (*ref_counter)++;
+  }
+  void remove() {
+    if (*ref_counter > 1) {
+      (*ref_counter)--;
+    } else {
+      delete resource_ptr;
+      delete ref_counter;
+    }
+  }
 };
 
 #endif //AMCIRCUIT_RESOURCEHANDLER_H
