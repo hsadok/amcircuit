@@ -37,7 +37,8 @@ std::string str_upper(std::string str) {
       throw BufferTooSmall(to_str("need size: " << PATH_MAX << std::endl));
     }
     buff[len] = '\0';
-    return std::string(buff);
+    std::string string_path = std::string(buff);
+    return string_path.substr(0, string_path.find_last_of("\\/"));
   }
 #else  // Assume Windows, gets rid of Windows mess
 #include <windows.h>
