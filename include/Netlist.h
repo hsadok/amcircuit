@@ -16,10 +16,13 @@ namespace amcircuit {
 
 class Netlist {
  public:
-  Netlist(const std::string& file_name);
+  explicit Netlist(const std::string& file_name);
 //  Netlist(const Netlist& other);
 //  ~Netlist();
 //  Netlist& operator=(const Netlist& other);
+  const std::vector<Element::Handler>& get_elements() const;
+  const std::vector<Statement::Handler>& get_statements() const;
+
  private:
   const std::string file_name;
   std::string title;
@@ -31,6 +34,6 @@ class Netlist {
   void handle_line(const std::string& line);
 };
 
-} // namespace amcircuit
+}  // namespace amcircuit
 
-#endif //AMCIRCUIT_NETLIST_H
+#endif  // AMCIRCUIT_NETLIST_H
