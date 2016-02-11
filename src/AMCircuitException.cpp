@@ -2,6 +2,7 @@
 // Created by Hugo Sadok on 2/6/16.
 //
 
+#include <string>
 #include "AMCircuitException.h"
 
 namespace amcircuit {
@@ -18,4 +19,7 @@ BadFileException::BadFileException(const std::string& description)
 BadElementString::BadElementString(const std::string& description)
     : AMCircuitException(description) { }
 
-} // namespace amcircuit
+BufferTooSmall::BufferTooSmall(const std::string& description)
+    : AMCircuitException(description) { }
+
+}  // namespace amcircuit

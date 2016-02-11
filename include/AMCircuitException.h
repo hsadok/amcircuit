@@ -30,6 +30,11 @@ class BadElementString : public AMCircuitException {
   explicit BadElementString(const std::string&);
 };
 
-} // namespace amcircuit
+class BufferTooSmall : public AMCircuitException {
+ public:
+  explicit BufferTooSmall(const std::string&);
+};
+
+}  // namespace amcircuit
 
 #endif //AMCIRCUIT_AMCIRCUITEXCEPTION_H
