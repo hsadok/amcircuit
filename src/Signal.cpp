@@ -2,8 +2,6 @@
 // Created by Hugo Sadok on 2/7/16.
 //
 
-#include <iostream>
-
 #include "Signal.h"
 #include "helpers.h"
 #include "AMCircuitException.h"
