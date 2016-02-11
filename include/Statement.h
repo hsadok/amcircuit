@@ -42,7 +42,12 @@ class Tran : public Statement {
                 int internal_steps);
   explicit Tran(const std::string& params);
 
- protected:
+  amc_float get_t_stop_s() const;
+  amc_float get_t_step_s() const;
+  int get_admo_order() const;
+  int get_internal_steps() const;
+
+ private:
   amc_float t_stop_s;
   amc_float t_step_s;
   int admo_order;

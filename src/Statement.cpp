@@ -3,6 +3,7 @@
 //
 
 #include <string>
+#include <sstream>
 
 #include "Statement.h"
 #include "AMCircuitException.h"
@@ -20,8 +21,11 @@ Statement::Handler Statement::get_statement(std::string params) {
   if (params[0] == '.') {
     params = params.substr(1, std::string::npos);
   }
-  params = params; // TODO str_upper
-  if (params == "TRAN") return Statement::Handler(new Tran(params));
+  std::stringstream params_stream(params);
+  std::string type;
+  params_stream >> type >> params;
+  type = str_upper(type);
+  if (type == "TRAN") return Statement::Handler(new Tran(params));
   throw BadElementString("Invalid string \"" + params + "\"");
 }
 
@@ -35,6 +39,22 @@ Tran::Tran(const std::string& params) : Statement(params) {
   line_stream >> t_stop_s >> t_step_s >> admo_string >> internal_steps;
   admo_order = *admo_string.rbegin() - '0';
   // line_stream >> std::ws; // ignore whitespace, may be needed...
+}
+
+amc_float Tran::get_t_stop_s() const {
+  return t_stop_s;
+}
+
+amc_float Tran::get_t_step_s() const {
+  return t_step_s;
+}
+
+int Tran::get_admo_order() const {
+  return admo_order;
+}
+
+int Tran::get_internal_steps() const {
+  return internal_steps;
 }
 
 } // namespace amcircuit
