@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <string>
 
+#include <stdlib.h>
+#include <stdarg.h>
+
 #include "helpers.h"
 #include "AMCircuitException.h"
 
@@ -50,5 +53,86 @@ std::string str_upper(std::string str) {
   }
 #endif
 
+void* createArrayUsingDimensionVector(unsigned sizeof_param,
+                                      unsigned num_dimension,
+                                      unsigned *dimensionVector);
+
+void free_array_using_dimension_vector(void** ptr, unsigned num_dimension,
+                                       unsigned *dimension_vector);
+
+void* malloc_array(unsigned sizeof_param, unsigned num_dimension,  ...) {
+  va_list ap;
+  unsigned i;
+  unsigned dimension_vector[num_dimension];
+
+  va_start(ap, num_dimension);
+
+  for (i = 0; i < num_dimension; i++){
+    dimension_vector[i] = va_arg(ap, unsigned);
+  }
+  va_end(ap);
+
+  return createArrayUsingDimensionVector(sizeof_param, num_dimension,
+                                         dimension_vector);
+}
+
+void* createArrayUsingDimensionVector(unsigned sizeof_param,
+                                      unsigned num_dimension,
+                                      unsigned *dimension_vector) {
+  unsigned i;
+  void **matrix;
+
+  if (num_dimension <= 1){
+    if (num_dimension < 1){
+      return NULL;
+    }
+    return (malloc(sizeof_param * dimension_vector[0]));
+  }
+
+  matrix = (void**) malloc(dimension_vector[0] * sizeof(void*));
+  if (matrix == NULL){
+    return NULL;
+  }
+  for(i = 0; i < dimension_vector[0]; i++){
+    if ((matrix[i] = createArrayUsingDimensionVector(
+        sizeof_param, num_dimension - 1, dimension_vector + 1)) == NULL) {
+      return NULL;
+    }
+  }
+  return (void*) matrix;
+}
+
+void free_array(void* ptr, unsigned num_dimension, ...) {
+  va_list ap;
+  unsigned i;
+  unsigned dimension_vector[num_dimension-1];
+
+  va_start(ap, num_dimension);
+
+  for (i = 0; i < num_dimension-1; i++){
+    dimension_vector[i] = va_arg(ap, unsigned);
+  }
+  va_end(ap);
+
+  free_array_using_dimension_vector(ptr, num_dimension, dimension_vector);
+}
+
+void free_array_using_dimension_vector(void** ptr, unsigned num_dimension,
+                                       unsigned *dimension_vector) {
+  unsigned i;
+
+  if (num_dimension <= 1) {
+    if (num_dimension == 1) {
+      free(ptr);
+    }
+    return;
+  }
+
+  for(i = 0; i < dimension_vector[0]; i++){
+    free_array_using_dimension_vector((void*) ptr[i], num_dimension-1,
+                                      dimension_vector+1);
+  }
+  free(ptr);
+}
 
 } // namespace amcircuit
