@@ -10,6 +10,11 @@
 
 using namespace amcircuit;
 
+// Getting rid of unused-value warning from GCC and clang
+// It's a usefull warning but doesn't make sense for test
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-value"
+
 SCENARIO("Statements should be created from a string", "[statment]") {
   GIVEN("A Transient statement string") {
     std::string str = ".TRAN 40 8E-2 ADMO4 1 UIC";
@@ -43,3 +48,4 @@ SCENARIO("Statements should be created from a string", "[statment]") {
     }
   }
 }
+#pragma GCC diagnostic pop

@@ -8,6 +8,11 @@
 
 using namespace amcircuit;
 
+// Getting rid of unused-value warning from GCC and clang
+// It's a usefull warning but doesn't make sense for test
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-value"
+
 SCENARIO("Elements should be created from a string", "[elements]") {
   GIVEN("A resistor string") {
     std::string str = "R0403 4 3 1";
@@ -311,3 +316,4 @@ SCENARIO("Elements should be created from a string", "[elements]") {
     }
   }
 }
+#pragma GCC diagnostic pop

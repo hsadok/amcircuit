@@ -21,15 +21,17 @@ SCENARIO("netlist should be correctly processed from a file", "[netlist]") {
       }
     }
     WHEN("provided with the correct netlist file") {
+      Netlist nl = Netlist(netlist_file_name);
       THEN("it should have the correct number of elements") {
         // 9 elements
         // 6 resistors
         // 2 AmpOp
         // 1 power supply
-        Netlist nl = Netlist(netlist_file_name);
         const std::vector<Element::Handler>& elements = nl.get_elements();
         REQUIRE(elements.size() == 9);
-
+      }
+      AND_THEN("it should have the correct number of nodes") {
+        REQUIRE(nl.get_number_of_nodes() == 6);
       }
     }
   }
