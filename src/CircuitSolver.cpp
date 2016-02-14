@@ -3,7 +3,9 @@
 //
 
 #include <vector>
-#include <cstring>
+#include <iostream>
+#include <fstream>
+#include <CircuitSolver.h>
 
 #include "CircuitSolver.h"
 #include "Elements.h"
@@ -30,6 +32,29 @@ CircuitSolver::~CircuitSolver() {
   free(matrix.x);
   free(matrix.c);
 }
+
+void CircuitSolver::write_to_stream(std::ostream& ostream) const {
+  ostream << get_variables_header() << std::endl;
+  for (int sample = 0; sample < num_solution_samples; ++sample) {
+    ostream << solutions[sample][0];
+    for (int i = 1; i < matrix.size; ++i) {
+      ostream << " " << solutions[sample][i];
+    }
+    ostream << std::endl;
+  }
+}
+
+void CircuitSolver::write_to_file(const std::string& file_name) const {
+  std::ofstream file;
+  file.open(file_name);
+  write_to_stream(file);
+  file.close();
+}
+
+void CircuitSolver::write_to_screen() const {
+  write_to_stream(std::cout);
+}
+
 
 inline amc_float* allocate_vector(const int size) {
   amc_float* vector;
@@ -66,27 +91,27 @@ inline void zero_matrix(amc_float** const matrix, const int size) {
 }
 
 void CircuitSolver::solve_circuit() {
-  prepare_circuit();
   int solution_number = 0;
   amc_float inner_step_s = config.get_t_step_s() / config.get_internal_steps();
   for (amc_float t = 0; t <= config.get_t_stop_s(); t+= config.get_t_step_s()) {
     for (int i = 0; i < config.get_internal_steps(); ++i) {
       update_circuit(t + i*inner_step_s);
-      lu_decomposition(matrix.A, matrix.L, matrix.size);
-      solve_lu(matrix.L, matrix.A, matrix.x, matrix.b, matrix.c, matrix.size);
+      lu_decomposition(matrix.L, matrix.A, matrix.size, 1);
+      solve_lu(matrix.L, matrix.A, matrix.x, matrix.b, matrix.c, matrix.size,1);
     }
     solutions[solution_number][0] = t;
-    std::memcpy(solutions[solution_number] + 1, matrix.x + 1, matrix.size - 1);
+    std::memcpy(solutions[solution_number] + 1, matrix.x + 1,
+                (matrix.size - 1) * sizeof(amc_float));
     ++solution_number;
   }
 }
 
-Tran CircuitSolver::find_first_tran_statement() const {
+Tran& CircuitSolver::find_first_tran_statement() {
   std::vector<Statement::Handler>& statements = netlist.get_statements();
-  std::vector< std::vector<Statement::Handler> >::iterator it;
+  std::vector<Statement::Handler>::iterator it;
   Tran* tran;
   for (it = statements.begin(); it != statements.end(); ++it) {
-    if ((tran = dynamic_cast<Tran*>(*it)) != NULL) {
+    if ((tran = dynamic_cast<Tran*>(&(**it))) != NULL) {
       return *tran;
     }
   }
@@ -119,7 +144,7 @@ void CircuitSolver::update_circuit(amc_float time) {
   zero_matrix(matrix.A, matrix.size);
   zero_vector(matrix.b, matrix.size);
 
-  const std::vector<Element::Handler>& elements = netlist.get_elements();
+  std::vector<Element::Handler>& elements = netlist.get_elements();
   int next_line = matrix.size - num_extra_lines;
 
   for (unsigned i = 0; i != elements.size(); ++i) {
@@ -128,6 +153,29 @@ void CircuitSolver::update_circuit(amc_float time) {
     next_line += elements[i]->get_num_of_currents();
   }
   use_ic = false;
+}
+
+std::string CircuitSolver::get_variables_header() const {
+  std::stringstream header;
+  int num_nodes = matrix.size - num_extra_lines;
+
+  header << "t";
+  for (int i = 1; i < num_nodes; ++i) { header << " " << i; }
+
+  std::vector<Element::Handler>& elements = netlist.get_elements();
+
+  for (unsigned i = 0; i != elements.size(); ++i) {
+    Element::Handler element = elements[i];
+    int currents = element->get_num_of_currents();
+    if (currents >= 1) {
+      header << " j" << (currents > 1 ? "1" : "") << element->get_name();
+    }
+    for (int j = 2; j <= currents; ++j) {
+      header << " j" << j << element->get_name();
+    }
+  }
+
+  return header.str();
 }
 
 }  // namespace amcircuit
