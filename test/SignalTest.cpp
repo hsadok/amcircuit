@@ -11,7 +11,7 @@
 using namespace amcircuit;
 
 // Getting rid of unused-value warning from GCC and clang
-// It's a usefull warning but doesn't make sense for test
+// It's a useful warning but doesn't make sense for test
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-value"
 
