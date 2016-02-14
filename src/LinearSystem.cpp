@@ -2,18 +2,13 @@
 // Created by Hugo Sadok on 2/11/16.
 //
 
+#include "AMCircuit.h"
 #include "LinearSystem.h"
 
 namespace amcircuit {
-
-void lu_decomposition(double **matrix, const int size, double **L, double **U) {
+// Use U for the original matrix as well as the output U from the decomposition
+void lu_decomposition(amc_float **L, amc_float **U, const int size) {
   int i, j, k;
-
-  for (i = 0; i < size; ++i){
-    for (j = 0; j < size; ++j){
-      U[i][j] = matrix[i][j];
-    }
-  }
 
   for (i = 0; i < size; ++i){
     L[i][i] = 1;
@@ -29,9 +24,9 @@ void lu_decomposition(double **matrix, const int size, double **L, double **U) {
   }
 }
 
-// C is not an input, must be a vector allocated with the right size
-void solveLU(double **L, double **U, double *X, double *B, double* C,
-             const int size) {
+// C is not an input, it must be a vector allocated with the right size
+void solve_lu(amc_float **L, amc_float **U, amc_float *X, amc_float *B,
+             amc_float* C, const int size) {
   int i, j;
 
   //Lc = b
