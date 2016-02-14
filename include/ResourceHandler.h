@@ -32,7 +32,13 @@ class ResourceHandler {
   T* operator->() {
     return resource_ptr;
   }
+  const T* operator->() const{
+    return resource_ptr;
+  }
   T& operator*() {
+    return *resource_ptr;
+  }
+  const T& operator*() const{
     return *resource_ptr;
   }
  private:
