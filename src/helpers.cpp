@@ -63,7 +63,13 @@ void free_array_using_dimension_vector(void** ptr, unsigned num_dimension,
 void* malloc_array(unsigned sizeof_param, unsigned num_dimension,  ...) {
   va_list ap;
   unsigned i;
-  unsigned dimension_vector[num_dimension];
+  unsigned* dimension_vector;
+  void* ret_ptr;
+
+  if (!(dimension_vector = (unsigned*) malloc(num_dimension *
+                                                  sizeof(*dimension_vector)))) {
+    return NULL;
+  }
 
   va_start(ap, num_dimension);
 
@@ -72,8 +78,10 @@ void* malloc_array(unsigned sizeof_param, unsigned num_dimension,  ...) {
   }
   va_end(ap);
 
-  return createArrayUsingDimensionVector(sizeof_param, num_dimension,
-                                         dimension_vector);
+  ret_ptr =  createArrayUsingDimensionVector(sizeof_param, num_dimension,
+                                             dimension_vector);
+  free(dimension_vector);
+  return ret_ptr;
 }
 
 void* createArrayUsingDimensionVector(unsigned sizeof_param,
@@ -105,7 +113,12 @@ void* createArrayUsingDimensionVector(unsigned sizeof_param,
 void free_array(void* ptr, unsigned num_dimension, ...) {
   va_list ap;
   unsigned i;
-  unsigned dimension_vector[num_dimension-1];
+  unsigned* dimension_vector;
+
+  if (!(dimension_vector = (unsigned*) malloc((num_dimension - 1) *
+                                                  sizeof(*dimension_vector)))) {
+    return;
+  }
 
   va_start(ap, num_dimension);
 
@@ -114,7 +127,9 @@ void free_array(void* ptr, unsigned num_dimension, ...) {
   }
   va_end(ap);
 
-  free_array_using_dimension_vector(ptr, num_dimension, dimension_vector);
+  free_array_using_dimension_vector((void**) ptr, num_dimension,
+                                    dimension_vector);
+  free(dimension_vector);
 }
 
 void free_array_using_dimension_vector(void** ptr, unsigned num_dimension,
@@ -129,7 +144,7 @@ void free_array_using_dimension_vector(void** ptr, unsigned num_dimension,
   }
 
   for(i = 0; i < dimension_vector[0]; i++){
-    free_array_using_dimension_vector((void*) ptr[i], num_dimension-1,
+    free_array_using_dimension_vector((void**) ptr[i], num_dimension-1,
                                       dimension_vector+1);
   }
   free(ptr);
