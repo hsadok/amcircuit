@@ -23,8 +23,9 @@ Statement::Handler Statement::get_statement(std::string params) {
   }
   std::stringstream params_stream(params);
   std::string type;
-  params_stream >> type >> params;
+  params_stream >> type;
   type = str_upper(type);
+  getline(params_stream, params);
   if (type == "TRAN") return Statement::Handler(new Tran(params));
   throw BadElementString("Invalid string \"" + params + "\"");
 }
