@@ -22,4 +22,7 @@ BadElementString::BadElementString(const std::string& description)
 BufferTooSmall::BufferTooSmall(const std::string& description)
     : AMCircuitException(description) { }
 
+IncompleteNetList::IncompleteNetList(const std::string& description)
+    : AMCircuitException(description) { }
+
 }  // namespace amcircuit

@@ -35,6 +35,11 @@ class BufferTooSmall : public AMCircuitException {
   explicit BufferTooSmall(const std::string&);
 };
 
+class IncompleteNetList : public AMCircuitException {
+ public:
+  explicit IncompleteNetList(const std::string&);
+};
+
 }  // namespace amcircuit
 
 #endif //AMCIRCUIT_AMCIRCUITEXCEPTION_H
