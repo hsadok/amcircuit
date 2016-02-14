@@ -23,6 +23,8 @@ class Signal {
   static Signal::Handler get_signal(std::string params);
   static Signal::Handler get_signal(std::istream& stream);
 
+  virtual amc_float get_value() const {};
+
  protected:
   std::stringstream line_stream;
 
