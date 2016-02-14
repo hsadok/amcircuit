@@ -5,8 +5,9 @@
 #include <algorithm>
 #include <string>
 
-#include <stdlib.h>
-#include <stdarg.h>
+#include <cstdlib>
+#include <cstdarg>
+#include <cstdio>
 
 #include "helpers.h"
 #include "AMCircuitException.h"
