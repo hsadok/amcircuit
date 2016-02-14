@@ -46,7 +46,7 @@ void CircuitSolver::write_to_stream(std::ostream& ostream) const {
 
 void CircuitSolver::write_to_file(const std::string& file_name) const {
   std::ofstream file;
-  file.open(file_name);
+  file.open(file_name.c_str());
   write_to_stream(file);
   file.close();
 }
