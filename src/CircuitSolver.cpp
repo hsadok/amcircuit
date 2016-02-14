@@ -100,8 +100,8 @@ void CircuitSolver::solve_circuit() {
       solve_lu(matrix.L, matrix.A, matrix.x, matrix.b, matrix.c, matrix.size,1);
     }
     solutions[solution_number][0] = t;
-    std::memcpy(solutions[solution_number] + 1, matrix.x + 1,
-                (matrix.size - 1) * sizeof(amc_float));
+    memcpy(solutions[solution_number] + 1, matrix.x + 1,
+           (matrix.size - 1) * sizeof(amc_float));
     ++solution_number;
   }
 }
