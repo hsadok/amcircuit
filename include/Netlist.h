@@ -21,12 +21,16 @@ class Netlist {
 //  ~Netlist();
 //  Netlist& operator=(const Netlist& other);
   const std::vector<Element::Handler>& get_elements() const;
+  std::vector<Element::Handler>& get_elements();
   const std::vector<Statement::Handler>& get_statements() const;
+  std::vector<Statement::Handler>& get_statements();
+  int get_number_of_nodes() const;
 
  private:
   const std::string file_name;
   std::string title;
   int current_line;
+  int number_of_nodes;
   std::vector<Element::Handler> elements;
   std::vector<Statement::Handler> statements;
 

@@ -32,8 +32,20 @@ const std::vector<Element::Handler>& Netlist::get_elements() const {
   return elements;
 }
 
+std::vector<Element::Handler>& Netlist::get_elements() {
+  return elements;
+}
+
 const std::vector<Statement::Handler>& Netlist::get_statements() const {
   return statements;
+}
+
+std::vector<Statement::Handler>& Netlist::get_statements() {
+  return statements;
+}
+
+int Netlist::get_number_of_nodes() const {
+  return number_of_nodes;
 }
 
 void Netlist::process_file() {
@@ -41,6 +53,7 @@ void Netlist::process_file() {
   if (!data) throw FileNotFound("Cannot open file \"" + file_name + "\"");
   std::string line;
   std::getline(data, title);
+  number_of_nodes = atoi(title.c_str());
   while (std::getline(data, line)) {
     handle_line(line);
   }
@@ -62,11 +75,11 @@ void Netlist::handle_line(const std::string& line) {
         elements.push_back(Element::get_element(line));
       }
     }
-  } catch (BadElementString e) {
-    throw BadFileException(to_str("Line: " << current_line << " \"" << line
-                                  << "\""));
+  } catch (const BadElementString& e) {
+    throw BadFileException(to_str("Line: " << current_line <<
+                                      " \"" << line << "\""));
     current_line++;
   }
 }
 
-} // namespace amcircuit
+}  // namespace amcircuit
