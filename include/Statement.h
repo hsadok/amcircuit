@@ -24,10 +24,10 @@ class Statement {
 
  protected:
   std::stringstream line_stream;
-//
-// private:
-//  Statement(const Statement& other);
-//  Statement& operator=(const Statement& other);
+
+ private:
+  Statement(const Statement& other);
+  Statement& operator=(const Statement& other);
 };
 
 
