@@ -8,6 +8,8 @@
 #include <string>
 #include <sstream>
 
+#include "AMCircuit.h"
+
 namespace amcircuit {
 
 std::string str_upper(std::string);
@@ -16,8 +18,6 @@ std::string get_executable_path();
 
 #define to_str( x ) static_cast< std::ostringstream & >( \
   ( std::ostringstream() << std::dec << x ) ).str()
-
-}  // namespace amcircuit
 
 // C style function to allocate arbitrary dimension arrays
 // It allocates arrays in a way that can be passed to functions easily
@@ -32,5 +32,11 @@ void* malloc_array(unsigned sizeof_param, unsigned num_dimension, ...);
 // double*** A = malloc_array(sizeof(double), 3, 6, 5, 4)
 // free_array(A, 3, 6, 5);
 void free_array(void* ptr, unsigned num_dimension, ...);
+
+void print_matrix(amc_float **matrix, unsigned const size1, unsigned size2 = 0);
+void print_vector(amc_float *vector, unsigned const size);
+
+
+}  // namespace amcircuit
 
 #endif //AMCIRCUIT_HELPERS_H

@@ -91,13 +91,10 @@ void* createArrayUsingDimensionVector(unsigned sizeof_param,
   void **matrix;
 
   if (num_dimension <= 1){
-    if (num_dimension < 1){
-      return NULL;
-    }
-    return (malloc(sizeof_param * dimension_vector[0]));
+    return (calloc(dimension_vector[0], sizeof_param));
   }
 
-  matrix = (void**) malloc(dimension_vector[0] * sizeof(void*));
+  matrix = (void**) calloc(dimension_vector[0], sizeof(void*));
   if (matrix == NULL){
     return NULL;
   }
@@ -150,4 +147,30 @@ void free_array_using_dimension_vector(void** ptr, unsigned num_dimension,
   free(ptr);
 }
 
-} // namespace amcircuit
+void print_matrix(amc_float **matrix, unsigned const size1, unsigned size2)
+{
+  unsigned i, j;
+
+  if (size2 == 0) { size2 = size1; }
+
+  for (i = 0; i < size1; ++i){
+    printf("| ");
+    for (j = 0; j < size2; ++j){
+      printf("%18.15f ", matrix[i][j]);
+    }
+    printf("|\r\n");
+  }
+  printf("\r\n");
+}
+
+void print_vector(amc_float *vector, unsigned const size)
+{
+  unsigned i;
+
+  for (i = 0; i < size; ++i){
+    printf("| %18.15f |\r\n", vector[i]);
+  }
+  printf("\r\n");
+}
+
+} //  namespace amcircuit
