@@ -22,13 +22,20 @@ class Element {
 
   typedef ResourceHandler<Element> Handler;
   static Element::Handler get_element(const std::string& element_string);
+
   std::string get_name() const;
+  virtual int get_num_of_currents() const;
+  virtual void flush_values();
+  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
+                           amc_float* b, int method_order,
+                           int currents_position, bool uic=false);
 
  protected:
   std::stringstream line_stream;
 
  private:
   std::string name;
+  int num_of_currents;
   Element(const Element& other);
   Element& operator=(const Element& other);
 };

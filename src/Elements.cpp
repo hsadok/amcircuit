@@ -10,12 +10,16 @@
 
 namespace amcircuit {
 
-Element::Element(const std::string& params) : line_stream(params) {
+Element::Element(const std::string& params) : line_stream(params),
+                                              num_of_currents(0) {
   line_stream >> name;
 }
 
-inline Element::~Element() { } // not to be implemented
+inline Element::~Element() { } // not to be implemented by Element
 
+// TODO There are ways of making this better, none of which I'm wishing to
+//      implement right now. (use a map that can be modified from outside and
+//      even allowing subclasses to include themselves)
 Element::Handler Element::get_element(const std::string& element_string) {
   switch (::toupper(element_string[0])) {
     case 'R': return Handler(new Resistor(element_string));
@@ -38,6 +42,12 @@ Element::Handler Element::get_element(const std::string& element_string) {
 std::string Element::get_name() const {
   return name;
 }
+
+int Element::get_num_of_currents() const {
+  return num_of_currents;
+}
+
+void flush_values() { }
 
 DoubleTerminalElement::DoubleTerminalElement(const std::string& name, int node1,
                                              int node2)
