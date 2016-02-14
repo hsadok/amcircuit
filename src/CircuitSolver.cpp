@@ -5,7 +5,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
-#include <CircuitSolver.h>
+#include <cstdlib>
 
 #include "CircuitSolver.h"
 #include "Elements.h"
