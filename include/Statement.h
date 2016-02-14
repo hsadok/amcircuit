@@ -24,10 +24,10 @@ class Statement {
 
  protected:
   std::stringstream line_stream;
-
- private:
-  Statement(const Statement& other);
-  Statement& operator=(const Statement& other);
+//
+// private:
+//  Statement(const Statement& other);
+//  Statement& operator=(const Statement& other);
 };
 
 
@@ -46,12 +46,14 @@ class Tran : public Statement {
   amc_float get_t_step_s() const;
   int get_admo_order() const;
   int get_internal_steps() const;
+  bool get_uic() const;
 
  private:
   amc_float t_stop_s;
   amc_float t_step_s;
   int admo_order;
   int internal_steps;
+  bool uic;
 };
 
 } // namespace amcircuit

@@ -38,7 +38,7 @@ Tran::Tran(const std::string& params) : Statement(params) {
   std::string admo_string;
   line_stream >> t_stop_s >> t_step_s >> admo_string >> internal_steps;
   admo_order = *admo_string.rbegin() - '0';
-  // line_stream >> std::ws; // ignore whitespace, may be needed...
+  uic = true;
 }
 
 amc_float Tran::get_t_stop_s() const {
@@ -55,6 +55,10 @@ int Tran::get_admo_order() const {
 
 int Tran::get_internal_steps() const {
   return internal_steps;
+}
+
+bool Tran::get_uic() const {
+  return uic;
 }
 
 } // namespace amcircuit
