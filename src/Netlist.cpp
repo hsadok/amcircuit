@@ -3,6 +3,7 @@
 //
 
 #include <fstream>
+#include <cstdlib>
 
 #include "Netlist.h"
 #include "AMCircuitException.h"
