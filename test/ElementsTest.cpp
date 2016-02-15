@@ -105,20 +105,29 @@ SCENARIO("Elements should be created from a string", "[elements]") {
     }
   }
   GIVEN("An inductor string") {
-    std::string str = "L123 4 3 3.7";
-    // TODO "L123 4 3 3.7 IC=2.3"
+    std::string str1 = "L123 4 3 3.7";
+    std::string str2 =  "L124 5 4 3.8 IC=2.3";
     WHEN("Using the Inductor object") {
-      Inductor* i = new Inductor(str);
+      Inductor* i1 = new Inductor(str1);
+      Inductor* i2 = new Inductor(str2);
       THEN("The Inductor parameters should be specified") {
-        REQUIRE(i->get_name() == "L123");
-        REQUIRE(i->get_node1() == 4);
-        REQUIRE(i->get_node2() == 3);
-        REQUIRE(i->get_L() == 3.7);
+        REQUIRE(i1->get_name() == "L123");
+        REQUIRE(i1->get_node1() == 4);
+        REQUIRE(i1->get_node2() == 3);
+        REQUIRE(i1->get_L() == 3.7);
+        REQUIRE(i1->get_initial_current() == 0);
+
+        REQUIRE(i2->get_name() == "L124");
+        REQUIRE(i2->get_node1() == 5);
+        REQUIRE(i2->get_node2() == 4);
+        REQUIRE(i2->get_L() == 3.8);
+        REQUIRE(i2->get_initial_current() == 2.3);
       }
-      delete i;
+      delete i1;
+      delete i2;
     }
     WHEN("Using the get_element") {
-      Element::Handler element = Element::get_element(str);
+      Element::Handler element = Element::get_element(str1);
       THEN("I should have a Inductor object") {
         REQUIRE_NOTHROW(dynamic_cast<Inductor&>(*element));
       }
@@ -128,20 +137,29 @@ SCENARIO("Elements should be created from a string", "[elements]") {
     }
   }
   GIVEN("A capacitor string") {
-    std::string str = "C123 4 3 3.7";
-    // TODO "C123 4 3 3.7 IC=2.3"
+    std::string str1 = "C123 4 3 3.7";
+    std::string str2 = "C124 5 4 4.7 IC=2.1";
     WHEN("Using the Capacitor object") {
-      Capacitor* c = new Capacitor(str);
+      Capacitor* c1 = new Capacitor(str1);
+      Capacitor* c2 = new Capacitor(str2);
       THEN("The capacitor parameters should be specified") {
-        REQUIRE(c->get_name() == "C123");
-        REQUIRE(c->get_node1() == 4);
-        REQUIRE(c->get_node2() == 3);
-        REQUIRE(c->get_C() == 3.7);
+        REQUIRE(c1->get_name() == "C123");
+        REQUIRE(c1->get_node1() == 4);
+        REQUIRE(c1->get_node2() == 3);
+        REQUIRE(c1->get_C() == 3.7);
+        REQUIRE(c1->get_initial_voltage() == 0);
+
+        REQUIRE(c2->get_name() == "C124");
+        REQUIRE(c2->get_node1() == 5);
+        REQUIRE(c2->get_node2() == 4);
+        REQUIRE(c2->get_C() == 4.7);
+        REQUIRE(c2->get_initial_voltage() == 2.1);
       }
-      delete c;
+      delete c1;
+      delete c2;
     }
     WHEN("Using the get_element") {
-      Element::Handler element = Element::get_element(str);
+      Element::Handler element = Element::get_element(str1);
       THEN("I should have a Capacitor object") {
         REQUIRE_NOTHROW(dynamic_cast<Capacitor&>(*element));
       }
