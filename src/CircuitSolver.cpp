@@ -92,18 +92,20 @@ inline void zero_matrix(amc_float** const matrix, const int size) {
 }
 
 void CircuitSolver::solve_circuit() {
-  int solution_number = 0;
+  amc_float t = 0;
   amc_float inner_step_s = config.get_t_step_s() / config.get_internal_steps();
-  for (amc_float t = 0; t <= config.get_t_stop_s(); t+= config.get_t_step_s()) {
-    for (int i = 0; i < config.get_internal_steps(); ++i) {
-      update_circuit(t + i*inner_step_s);
+  for (int i = 0; i < num_solution_samples; ++i) {
+    amc_float inner_time = t;
+    for (int j = 0; j < config.get_internal_steps(); ++j) {
+      update_circuit(inner_time);
       lu_decomposition(matrix.L, matrix.A, matrix.size, 1);
       solve_lu(matrix.L, matrix.A, matrix.x, matrix.b, matrix.c, matrix.size,1);
+      inner_time += inner_step_s;
     }
-    solutions[solution_number][0] = t;
-    memcpy(solutions[solution_number] + 1, matrix.x + 1,
+    solutions[i][0] = t;
+    memcpy(solutions[i] + 1, matrix.x + 1,
            (matrix.size - 1) * sizeof(amc_float));
-    ++solution_number;
+    t += config.get_t_step_s();
   }
 }
 
@@ -127,6 +129,8 @@ void CircuitSolver::prepare_circuit() {
     num_extra_lines += elements[i]->get_num_of_currents();
   }
   matrix.size = 1 + netlist.get_number_of_nodes() + num_extra_lines;
+  std::cout << "num_solution_samples = " << config.get_t_stop_s() << " / " << config.get_t_step_s() << " + 1" << std::endl;
+  std::cout << config.get_t_stop_s()/config.get_t_step_s() << std::endl;
   num_solution_samples =
       static_cast<int>(config.get_t_stop_s()/config.get_t_step_s()) + 1;
 
