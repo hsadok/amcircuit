@@ -363,7 +363,7 @@ void VoltageSource::place_stamp(amc_float time, amc_float** A, amc_float* x,
   A[get_node_n()][currents_position]-=1;
   A[currents_position][get_node_p()]-=1;
   A[currents_position][get_node_n()]+=1;
-  b[currents_position]-= signal->get_value();
+  b[currents_position]-= signal->get_value(time);
 }
 
 IdealOpAmp::IdealOpAmp(const std::string& name, int out_p, int out_n, int in_p,
