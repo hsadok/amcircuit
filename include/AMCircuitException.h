@@ -40,6 +40,11 @@ class IncompleteNetList : public AMCircuitException {
   explicit IncompleteNetList(const std::string&);
 };
 
+class InvalidIntegrationMethod : public AMCircuitException {
+ public:
+  explicit  InvalidIntegrationMethod(__const std::string&);
+};
+
 }  // namespace amcircuit
 
 #endif //AMCIRCUIT_AMCIRCUITEXCEPTION_H

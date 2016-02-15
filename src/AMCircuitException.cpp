@@ -7,22 +7,25 @@
 
 namespace amcircuit {
 
-AMCircuitException::AMCircuitException(const std::string& description)
-    : std::runtime_error(description) { }
+AMCircuitException::AMCircuitException(const std::string& desc)
+    : std::runtime_error(desc) { }
 
-FileNotFound::FileNotFound(const std::string& description)
-    : AMCircuitException(description) { }
+FileNotFound::FileNotFound(const std::string& desc)
+    : AMCircuitException(desc) { }
 
-BadFileException::BadFileException(const std::string& description)
-    : AMCircuitException(description) { }
+BadFileException::BadFileException(const std::string& desc)
+    : AMCircuitException(desc) { }
 
-BadElementString::BadElementString(const std::string& description)
-    : AMCircuitException(description) { }
+BadElementString::BadElementString(const std::string& desc)
+    : AMCircuitException(desc) { }
 
-BufferTooSmall::BufferTooSmall(const std::string& description)
-    : AMCircuitException(description) { }
+BufferTooSmall::BufferTooSmall(const std::string& desc)
+    : AMCircuitException(desc) { }
 
-IncompleteNetList::IncompleteNetList(const std::string& description)
-    : AMCircuitException(description) { }
+IncompleteNetList::IncompleteNetList(const std::string& desc)
+    : AMCircuitException(desc) { }
+
+InvalidIntegrationMethod::InvalidIntegrationMethod(const std::string& desc)
+    : AMCircuitException(desc) { }
 
 }  // namespace amcircuit
