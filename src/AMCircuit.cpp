@@ -25,7 +25,7 @@ int main(int argc, char const *argv[]) {
   const std::string netlist_file_name = argv[1];
   std::string output_file_name;
   if (argc == 2) {
-    output_file_name = netlist_file_name + ".out";
+    output_file_name = netlist_file_name + ".tab";
   } else {
     output_file_name = argv[2];
   }
