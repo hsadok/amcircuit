@@ -15,37 +15,44 @@
 
 namespace amcircuit {
 
+struct StampParameters {
+  amc_float** A;
+  amc_float* x;
+  amc_float* b;
+  int method_order;
+  amc_float step_s;
+  bool use_ic;
+
+  amc_float time;
+  int currents_position;
+};
+
 class Element {
  public:
-  explicit Element(const std::string& params, const int num_of_currents);
+  explicit Element(const std::string& params);
   virtual ~Element() = 0;
 
   typedef ResourceHandler<Element> Handler;
   static Element::Handler get_element(const std::string& element_string);
 
   std::string get_name() const;
-  virtual int get_num_of_currents() const;
+  virtual int get_num_of_currents() const = 0;
 //  virtual void flush_values();
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false) = 0;
+  virtual void place_stamp(StampParameters&) = 0;
 
  protected:
   std::stringstream line_stream;
 
  private:
   std::string name;
-  int num_of_currents;
   Element(const Element& other);
   Element& operator=(const Element& other);
 };
 
 class DoubleTerminalElement : public Element {
  public:
-  DoubleTerminalElement(const std::string& name, int node1, int node2,
-                        const int num_of_currents);
-  explicit DoubleTerminalElement(const std::string& params,
-                                 const int num_of_currents);
+  DoubleTerminalElement(const std::string& name, int node1, int node2);
+  explicit DoubleTerminalElement(const std::string& params);
   int get_node1() const;
   int get_node2() const;
  private:
@@ -55,10 +62,8 @@ class DoubleTerminalElement : public Element {
 
 class SimpleSourceElement : public Element {
  public:
-  SimpleSourceElement(const std::string& name, int node_p, int node_n,
-                      const int num_of_currents);
-  explicit SimpleSourceElement(const std::string& params,
-                               const int num_of_currents);
+  SimpleSourceElement(const std::string& name, int node_p, int node_n);
+  explicit SimpleSourceElement(const std::string& params);
   int get_node_p() const;
   int get_node_n() const;
 
@@ -70,9 +75,8 @@ class SimpleSourceElement : public Element {
 class ArbitrarySourceElement : public SimpleSourceElement {
  public:
   ArbitrarySourceElement(const std::string& name, int node_p, int node_n,
-                      Signal::Handler signal, const int num_of_currents);
-  explicit ArbitrarySourceElement(const std::string& params,
-                                  const int num_of_currents);
+                         Signal::Handler signal);
+  explicit ArbitrarySourceElement(const std::string& params);
   const Signal::Handler& get_signal() const;
  protected:
   Signal::Handler signal;
@@ -81,10 +85,8 @@ class ArbitrarySourceElement : public SimpleSourceElement {
 class ControlledElement : public Element {
  public:
   ControlledElement(const std::string& name, int node_p, int node_n,
-                    int node_ctrl_p, int node_ctrl_n,
-                    const int num_of_currents);
-  explicit ControlledElement(const std::string& params,
-                             const int num_of_currents);
+                    int node_ctrl_p, int node_ctrl_n);
+  explicit ControlledElement(const std::string& params);
   int get_node_p() const;
   int get_node_n() const;
   int get_node_ctrl_p() const;
@@ -104,9 +106,8 @@ class Resistor : public DoubleTerminalElement {
 
   amc_float get_R() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  private:
   amc_float R;
@@ -119,9 +120,8 @@ class NonLinearResistor : public DoubleTerminalElement {
   explicit NonLinearResistor(const std::string& params);
   const std::vector<amc_float>& get_R() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  protected:
   std::vector<amc_float> R;
@@ -138,9 +138,8 @@ class VoltageControlledSwitch : public ControlledElement {
   amc_float get_g_off() const;
   amc_float get_v_ref() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  private:
   amc_float g_on;
@@ -157,13 +156,13 @@ class Inductor : public DoubleTerminalElement {
   amc_float get_L() const;
   amc_float get_initial_current() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  private:
   amc_float L;
   amc_float initial_current;
+  amc_float past_voltages[2];
 };
 
 class Capacitor : public DoubleTerminalElement {
@@ -175,13 +174,14 @@ class Capacitor : public DoubleTerminalElement {
   amc_float get_C() const;
   amc_float get_initial_voltage() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  private:
   amc_float C;
   amc_float initial_voltage;
+  amc_float past_currents[3];
+  amc_float past_voltage;
 };
 
 class VoltageControlledVoltageSource : public ControlledElement {
@@ -192,9 +192,8 @@ class VoltageControlledVoltageSource : public ControlledElement {
   explicit VoltageControlledVoltageSource(const std::string& params);
   amc_float get_Av() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  private:
   amc_float Av;
@@ -208,9 +207,8 @@ class CurrentControlledCurrentSource : public ControlledElement {
   explicit CurrentControlledCurrentSource(const std::string& params);
   amc_float get_Ai() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  private:
   amc_float Ai;
@@ -224,9 +222,8 @@ class VoltageControlledCurrentSource : public ControlledElement {
   explicit VoltageControlledCurrentSource(const std::string& params);
   amc_float get_Gm() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  private:
   amc_float Gm;
@@ -240,9 +237,8 @@ class CurrentControlledVoltageSource : public ControlledElement {
   explicit CurrentControlledVoltageSource(const std::string& params);
   amc_float get_Rm() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  private:
   amc_float Rm;
@@ -254,9 +250,8 @@ class CurrentSource : public ArbitrarySourceElement {
                 Signal::Handler signal);
   explicit CurrentSource(const std::string& params);
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 };
 
 class VoltageSource : public ArbitrarySourceElement {
@@ -265,9 +260,8 @@ class VoltageSource : public ArbitrarySourceElement {
                 Signal::Handler signal);
   explicit VoltageSource(const std::string& params);
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 };
 
 class IdealOpAmp : public Element {
@@ -280,9 +274,8 @@ class IdealOpAmp : public Element {
   int get_in_p() const;
   int get_in_n() const;
 
-  virtual void place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic = false);
+  virtual int get_num_of_currents() const;
+  virtual void place_stamp(StampParameters&);
 
  private:
   int out_p;

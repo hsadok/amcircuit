@@ -6,12 +6,12 @@
 #include <iostream>
 
 #include "Elements.h"
+#include "helpers.h"
 #include "AMCircuitException.h"
 
 namespace amcircuit {
 
-Element::Element(const std::string& params, const int num_of_currents)
-    : line_stream(params), num_of_currents(num_of_currents) {
+Element::Element(const std::string& params) : line_stream(params) {
   line_stream >> name;
 }
 
@@ -43,18 +43,13 @@ std::string Element::get_name() const {
   return name;
 }
 
-int Element::get_num_of_currents() const {
-  return num_of_currents;
-}
 
 DoubleTerminalElement::DoubleTerminalElement(const std::string& name, int node1,
-                                             int node2,
-                                             const int num_of_currents)
-    : Element(name, num_of_currents), node1(node1), node2(node2) { }
+                                             int node2)
+    : Element(name), node1(node1), node2(node2) { }
 
-DoubleTerminalElement::DoubleTerminalElement(const std::string& params,
-                                             const int num_of_currents)
-    : Element(params, num_of_currents) {
+DoubleTerminalElement::DoubleTerminalElement(const std::string& params)
+    : Element(params) {
   line_stream >> node1 >> node2;
 }
 
@@ -67,11 +62,11 @@ int DoubleTerminalElement::get_node2() const {
 }
 
 SimpleSourceElement::SimpleSourceElement(const std::string& name, int node_p,
-                                         int node_n, const int num_of_currents)
-    : Element(name, num_of_currents), node_p(node_p), node_n(node_n) { }
+                                         int node_n)
+    : Element(name), node_p(node_p), node_n(node_n) { }
 
-SimpleSourceElement::SimpleSourceElement(const std::string& params, const int num_of_currents)
-    : Element(params, num_of_currents) {
+SimpleSourceElement::SimpleSourceElement(const std::string& params)
+    : Element(params) {
   line_stream >> node_p >> node_n;
 }
 
@@ -85,15 +80,11 @@ int SimpleSourceElement::get_node_n() const {
 
 ArbitrarySourceElement::ArbitrarySourceElement(const std::string& name,
                                                int node_p, int node_n,
-                                               Signal::Handler signal,
-                                               const int num_of_currents)
-    : SimpleSourceElement(name, node_p, node_n, num_of_currents),
-      signal(signal) { }
+                                               Signal::Handler signal)
+    : SimpleSourceElement(name, node_p, node_n), signal(signal) { }
 
-ArbitrarySourceElement::ArbitrarySourceElement(const std::string& params,
-                                               const int num_of_currents)
-    : SimpleSourceElement(params, num_of_currents),
-      signal(Signal::get_signal(line_stream)) { }
+ArbitrarySourceElement::ArbitrarySourceElement(const std::string& params)
+    : SimpleSourceElement(params), signal(Signal::get_signal(line_stream)) { }
 
 const Signal::Handler& ArbitrarySourceElement::get_signal() const {
   return signal;
@@ -101,13 +92,12 @@ const Signal::Handler& ArbitrarySourceElement::get_signal() const {
 
 ControlledElement::ControlledElement(const std::string& name, int node_p,
                                      int node_n, int node_ctrl_p,
-                                     int node_ctrl_n, const int num_of_currents)
-    : Element(name, num_of_currents), node_p(node_p), node_n(node_n),
+                                     int node_ctrl_n)
+    : Element(name), node_p(node_p), node_n(node_n),
       node_ctrl_p(node_ctrl_p), node_ctrl_n(node_ctrl_n) { }
 
-ControlledElement::ControlledElement(const std::string& params,
-                                     const int num_of_currents)
-    : Element(params, num_of_currents) {
+ControlledElement::ControlledElement(const std::string& params)
+    : Element(params) {
   line_stream >> node_p >> node_n >> node_ctrl_p >> node_ctrl_n;
 }
 
@@ -128,9 +118,9 @@ int ControlledElement::get_node_ctrl_n() const {
 }
 
 Resistor::Resistor(const std::string& name, int node1, int node2, amc_float R)
-    : DoubleTerminalElement(name, node1, node2, 0), R(R) { }
+    : DoubleTerminalElement(name, node1, node2), R(R) { }
 
-Resistor::Resistor(const std::string& params) : DoubleTerminalElement(params, 0) {
+Resistor::Resistor(const std::string& params) : DoubleTerminalElement(params) {
   line_stream >> R;
 }
 
@@ -138,20 +128,23 @@ amc_float Resistor::get_R() const {
   return R;
 }
 
-void Resistor::place_stamp(amc_float, amc_float** A, amc_float*, amc_float* b,
-                           int, int, bool) {
-  A[get_node1()][get_node1()]+=(1/R);
-  A[get_node2()][get_node2()]+=(1/R);
-  A[get_node1()][get_node2()]-=(1/R);
-  A[get_node2()][get_node1()]-=(1/R);
+int Resistor::get_num_of_currents() const {
+  return 0;
+}
+
+void Resistor::place_stamp(StampParameters& p) {
+  p.A[get_node1()][get_node1()] += 1/R;
+  p.A[get_node2()][get_node2()] += 1/R;
+  p.A[get_node1()][get_node2()] -= 1/R;
+  p.A[get_node2()][get_node1()] -= 1/R;
 }
 
 NonLinearResistor::NonLinearResistor(const std::string& name, int node1,
                                      int node2, const std::vector<amc_float>& R)
-    : DoubleTerminalElement(name, node1, node2, 0), R(R) { }
+    : DoubleTerminalElement(name, node1, node2), R(R) { }
 
 NonLinearResistor::NonLinearResistor(const std::string& params)
-    : DoubleTerminalElement(params, 0), R(8) {
+    : DoubleTerminalElement(params), R(8) {
   line_stream >> R[0] >> R[1] >> R[2] >> R[3] >> R[4] >> R[5] >> R[6] >> R[7];
 }
 
@@ -159,20 +152,22 @@ const std::vector<amc_float>& NonLinearResistor::get_R() const {
   return R;
 }
 
-void NonLinearResistor::place_stamp(amc_float time, amc_float** A, amc_float* x,
-                                    amc_float* b, int method_order,
-                                    int currents_position, bool uic) {
+int NonLinearResistor::get_num_of_currents() const {
+  throw AMCircuitException("");
+}
 
+void NonLinearResistor::place_stamp(StampParameters& parameters) {
+  // TODO NonLinearResistor stamp
 }
 
 VoltageControlledSwitch::VoltageControlledSwitch(
     const std::string& name, int node_p, int node_n, int node_ctrl_p,
     int node_ctrl_n, amc_float g_on, amc_float g_off, amc_float v_ref)
-    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n, 0),
+    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n),
       g_on(g_on), g_off(g_off), v_ref(v_ref) { }
 
 VoltageControlledSwitch::VoltageControlledSwitch(const std::string& params)
-    : ControlledElement(params, 0), g_on(0.0), g_off(0.0), v_ref(0.0) {
+    : ControlledElement(params), g_on(0.0), g_off(0.0), v_ref(0.0) {
   line_stream >> g_on >> g_off >> v_ref;
 }
 
@@ -188,21 +183,29 @@ amc_float VoltageControlledSwitch::get_v_ref() const {
   return v_ref;
 }
 
-void VoltageControlledSwitch::place_stamp(amc_float time, amc_float** A,
-                                          amc_float* x, amc_float* b,
-                                          int method_order,
-                                          int currents_position,
-                                          bool uic) {
+int VoltageControlledSwitch::get_num_of_currents() const {
+  throw AMCircuitException("");
+}
 
+void VoltageControlledSwitch::place_stamp(StampParameters& parameters) {
+  // TODO VoltageControlledSwitch stamp
 }
 
 Inductor::Inductor(const std::string& name, int node1, int node2, amc_float L,
                    amc_float initial_current)
-    : DoubleTerminalElement(name, node1, node2, 0), L(L),
+    : DoubleTerminalElement(name, node1, node2), L(L),
       initial_current(initial_current) { }
 
-Inductor::Inductor(const std::string& params) : DoubleTerminalElement(params, 0) {
-  line_stream >> L >> initial_current; // TODO initial_current is optional
+Inductor::Inductor(const std::string& params) : DoubleTerminalElement(params),
+                                                initial_current(0) {
+  std::string ic_string = "";
+  line_stream >> L >> ic_string;
+  if (ic_string.size() > 0) {
+    if (ic_string.substr(0,3) != "IC=") {
+      throw BadElementString("Invalid string \"" + params + "\"");
+    }
+    std::stringstream(ic_string.substr(3,std::string::npos)) >> initial_current;
+  }
 }
 
 amc_float Inductor::get_L() const {
@@ -213,20 +216,75 @@ amc_float Inductor::get_initial_current() const {
   return initial_current;
 }
 
-void Inductor::place_stamp(amc_float time, amc_float** A, amc_float* x,
-                           amc_float* b, int method_order,
-                           int currents_position, bool uic) {
+int Inductor::get_num_of_currents() const {
+  return 1;
+}
 
+void Inductor::place_stamp(StampParameters& p) {
+  amc_float last_current, last_voltage;
+  if (p.time ==0 || p.use_ic) {
+    last_current = initial_current;
+    past_voltages[1] = past_voltages[0] = last_voltage = 0;
+  } else {
+    last_current = p.x[p.currents_position];
+    last_voltage = p.x[get_node1()] - p.x[get_node2()];
+  }
+
+  p.A[get_node1()][p.currents_position] += 1;
+  p.A[get_node2()][p.currents_position] -= 1;
+  p.A[p.currents_position][get_node1()] -= 1;
+  p.A[p.currents_position][get_node2()] += 1;
+
+  switch (p.method_order) {
+    case 1: {
+      p.A[p.currents_position][p.currents_position] += L/p.step_s;
+      p.b[p.currents_position] += L/p.step_s * last_current;
+      break;
+    }
+    case 2: {
+      p.A[p.currents_position][p.currents_position] += 2*L/p.step_s;
+      p.b[p.currents_position] += 2*L/p.step_s*last_current + last_voltage;
+      break;
+    }
+    case 3: {
+      p.A[p.currents_position][p.currents_position] += 12.0/5.0*L/p.step_s;
+      p.b[p.currents_position] += 12.0/5.0*L/p.step_s*last_current
+                                  - 1.0/5.0*past_voltages[0]
+                                  + 8.0/5.0*last_voltage;
+      break;
+    }
+    case 4: {
+      p.A[p.currents_position][p.currents_position] += 8.0/3.0*L/p.step_s;
+      p.b[p.currents_position] += 8.0/3.0*L/p.step_s*last_current
+                                  + 1.0/9.0*past_voltages[1]
+                                  - 5.0/9.0*past_voltages[0]
+                                  + 19.0/9.0*last_voltage;
+      break;
+    }
+    default: {
+      throw InvalidIntegrationMethod(
+          to_str("Invalid Adams-Moulton order: " << p.method_order));
+    }
+  }
+  past_voltages[1] = past_voltages[0];
+  past_voltages[0] = last_voltage;
 }
 
 Capacitor::Capacitor(const std::string& name, int node1, int node2, amc_float C,
                      amc_float initial_voltage)
-    : DoubleTerminalElement(name, node1, node2, 0), C(C),
+    : DoubleTerminalElement(name, node1, node2), C(C),
       initial_voltage(initial_voltage) { }
 
 Capacitor::Capacitor(const std::string& params)
-    : DoubleTerminalElement(params, 0) {
-  line_stream >> C >> initial_voltage; // TODO initial_voltage is optional
+    : DoubleTerminalElement(params), initial_voltage(0) {
+  std::string iv_string;
+  line_stream >> C >> iv_string;
+  if (iv_string.size() > 0) {
+    if (iv_string.substr(0,3) != "IC=") {
+      throw BadElementString("Invalid string \"" + params + "\"");
+    }
+    std::stringstream(iv_string.substr(3,std::string::npos)) >> initial_voltage;
+  }
 }
 
 amc_float Capacitor::get_C() const {
@@ -237,20 +295,96 @@ amc_float Capacitor::get_initial_voltage() const {
   return initial_voltage;
 }
 
-void Capacitor::place_stamp(amc_float time, amc_float** A, amc_float* x,
-                            amc_float* b, int method_order,
-                            int currents_position, bool uic) {
+int Capacitor::get_num_of_currents() const {
+  return 0;
+}
 
+void Capacitor::place_stamp(StampParameters& p) {
+  amc_float last_voltage, last_current;
+  if (p.time ==0 || p.use_ic) {
+    past_voltage = last_voltage = initial_voltage;
+    past_currents[2] = past_currents[1] = past_currents[0] = 0;
+  } else {
+    last_voltage = p.x[get_node1()] - p.x[get_node2()];
+  }
+
+  switch (p.method_order) {
+    case 1: {
+      last_current = (past_voltage - last_voltage) / (p.step_s/C);
+      p.A[get_node1()][get_node1()] += C/p.step_s;
+      p.A[get_node2()][get_node2()] += C/p.step_s;
+      p.A[get_node1()][get_node2()] -= C/p.step_s;
+      p.A[get_node2()][get_node1()] -= C/p.step_s;
+      p.b[get_node1()] += C/p.step_s * last_voltage;
+      p.b[get_node1()] -= C/p.step_s * last_voltage;
+      break;
+    }
+    case 2: {
+      last_current = (past_voltage + 1.0/2.0 * p.step_s/C * past_currents[0]
+                      - last_voltage) / (p.step_s/(2*C));
+      p.A[get_node1()][get_node1()] += 2*C/p.step_s;
+      p.A[get_node2()][get_node2()] += 2*C/p.step_s;
+      p.A[get_node1()][get_node2()] -= 2*C/p.step_s;
+      p.A[get_node2()][get_node1()] -= 2*C/p.step_s;
+      p.b[get_node1()] += 2 * C/p.step_s * last_voltage + last_current;
+      p.b[get_node1()] -= 2 * C/p.step_s * last_voltage + last_current;
+      break;
+    }
+    case 3: {
+      last_current = (past_voltage - 1.0/12.0 * p.step_s/C * past_currents[1]
+                                   + 8.0/12.0 * p.step_s/C * past_currents[0]
+                                   - last_voltage)
+                     / (5.0/12.0 * p.step_s/C);
+      p.A[get_node1()][get_node1()] += 12.0/5.0*C/p.step_s;
+      p.A[get_node2()][get_node2()] += 12.0/5.0*C/p.step_s;
+      p.A[get_node1()][get_node2()] -= 12.0/5.0*C/p.step_s;
+      p.A[get_node2()][get_node1()] -= 12.0/5.0*C/p.step_s;
+      p.b[get_node1()] += 12.0/5.0*C/p.step_s * last_voltage
+                          - 1.0/5.0*past_currents[0] + 8.0/5.0*last_current;
+      p.b[get_node1()] -= 12.0/5.0*C/p.step_s * last_voltage
+                          - 1.0/5.0*past_currents[0] + 8.0/5.0*last_current;
+      break;
+    }
+    case 4: {
+      last_current = (past_voltage +  1.0/24.0 * p.step_s/C * past_currents[2]
+                                   -  5.0/24.0 * p.step_s/C * past_currents[1]
+                                   + 15.0/24.0 * p.step_s/C * past_currents[0]
+                                   - last_voltage)
+                     / (3.0/8.0 * p.step_s/C);
+      p.A[get_node1()][get_node1()] += 8.0/3.0*C/p.step_s;
+      p.A[get_node2()][get_node2()] += 8.0/3.0*C/p.step_s;
+      p.A[get_node1()][get_node2()] -= 8.0/3.0*C/p.step_s;
+      p.A[get_node2()][get_node1()] -= 8.0/3.0*C/p.step_s;
+      p.b[get_node1()] += 8.0/3.0 * C/p.step_s * last_voltage
+                          + 1.0/9.0 * past_currents[1]
+                          - 5.0/9.0 * past_currents[0]
+                          + 19.0/9.0 * last_current;
+      p.b[get_node1()] -= 8.0/3.0 * C/p.step_s * last_voltage
+                          + 1.0/9.0 * past_currents[1]
+                          - 5.0/9.0 * past_currents[0]
+                          + 19.0/9.0 * last_current;
+      break;
+    }
+    default: {
+      throw InvalidIntegrationMethod(
+          to_str("Invalid Adams-Moulton order: " << p.method_order));
+    }
+  }
+
+  past_currents[2] = past_currents[1];
+  past_currents[1] = past_currents[0];
+  past_currents[0] = last_current;
+  past_voltage = last_voltage;
 }
 
 VoltageControlledVoltageSource::VoltageControlledVoltageSource(
     const std::string& name, int node_p, int node_n, int node_ctrl_p,
     int node_ctrl_n, amc_float Av)
-    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n, 0),
+    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n),
       Av(Av) { }
 
 VoltageControlledVoltageSource::VoltageControlledVoltageSource(
-    const std::string& params) : ControlledElement(params, 0) {
+    const std::string& params) : ControlledElement(params) {
   line_stream >> Av;
 }
 
@@ -258,22 +392,27 @@ amc_float VoltageControlledVoltageSource::get_Av() const {
   return Av;
 }
 
-void VoltageControlledVoltageSource::place_stamp(amc_float time,
-                                                 amc_float** A, amc_float* x,
-                                                 amc_float* b, int method_order,
-                                                 int currents_position,
-                                                 bool uic) {
+int VoltageControlledVoltageSource::get_num_of_currents() const {
+  return 1;
+}
 
+void VoltageControlledVoltageSource::place_stamp(StampParameters& p) {
+  p.A[p.currents_position][get_node_p()] -= 1;
+  p.A[p.currents_position][get_node_n()] += 1;
+  p.A[p.currents_position][get_node_ctrl_p()] += Av;
+  p.A[p.currents_position][get_node_ctrl_n()] -= Av;
+  p.A[get_node_p()][p.currents_position] += 1;
+  p.A[get_node_n()][p.currents_position] -= 1;
 }
 
 CurrentControlledCurrentSource::CurrentControlledCurrentSource(
     const std::string& name, int node_p, int node_n, int node_ctrl_p,
     int node_ctrl_n, amc_float Ai)
-    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n, 0),
+    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n),
       Ai(Ai) { }
 
 CurrentControlledCurrentSource::CurrentControlledCurrentSource(
-    const std::string& params) : ControlledElement(params, 0) {
+    const std::string& params) : ControlledElement(params) {
   line_stream >> Ai;
 }
 
@@ -281,22 +420,27 @@ amc_float CurrentControlledCurrentSource::get_Ai() const {
   return Ai;
 }
 
-void CurrentControlledCurrentSource::place_stamp(amc_float time, amc_float** A,
-                                                 amc_float* x, amc_float* b,
-                                                 int method_order,
-                                                 int currents_position,
-                                                 bool uic) {
+int CurrentControlledCurrentSource::get_num_of_currents() const {
+  return 1;
+}
 
+void CurrentControlledCurrentSource::place_stamp(StampParameters& p) {
+  p.A[p.currents_position][get_node_ctrl_p()] -= 1;
+  p.A[p.currents_position][get_node_ctrl_n()] += 1;
+  p.A[get_node_p()][p.currents_position] += Ai;
+  p.A[get_node_n()][p.currents_position] -= Ai;
+  p.A[get_node_ctrl_p()][p.currents_position] += 1;
+  p.A[get_node_ctrl_n()][p.currents_position] -= 1;
 }
 
 VoltageControlledCurrentSource::VoltageControlledCurrentSource(
     const std::string& name, int node_p, int node_n, int node_ctrl_p,
     int node_ctrl_n, amc_float Gm)
-    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n, 0),
+    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n),
       Gm(Gm) { }
 
 VoltageControlledCurrentSource::VoltageControlledCurrentSource(
-    const std::string& params) : ControlledElement(params, 0) {
+    const std::string& params) : ControlledElement(params) {
   line_stream >> Gm;
 }
 
@@ -304,22 +448,26 @@ amc_float VoltageControlledCurrentSource::get_Gm() const {
   return Gm;
 }
 
-void VoltageControlledCurrentSource::place_stamp(amc_float time, amc_float** A,
-                                                 amc_float* x, amc_float* b,
-                                                 int method_order,
-                                                 int currents_position,
-                                                 bool uic) {
 
+int VoltageControlledCurrentSource::get_num_of_currents() const {
+  return 0;
+}
+
+void VoltageControlledCurrentSource::place_stamp(StampParameters& p) {
+  p.A[get_node_p()][get_node_ctrl_p()] += Gm;
+  p.A[get_node_p()][get_node_ctrl_n()] -= Gm;
+  p.A[get_node_n()][get_node_ctrl_p()] -= Gm;
+  p.A[get_node_n()][get_node_ctrl_n()] += Gm;
 }
 
 CurrentControlledVoltageSource::CurrentControlledVoltageSource(
     const std::string& name, int node_p, int node_n, int node_ctrl_p,
     int node_ctrl_n, amc_float Rm)
-    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n, 0),
+    : ControlledElement(name, node_p, node_n, node_ctrl_p, node_ctrl_n),
       Rm(Rm) { }
 
 CurrentControlledVoltageSource::CurrentControlledVoltageSource(
-    const std::string& params) : ControlledElement(params, 0) {
+    const std::string& params) : ControlledElement(params) {
   line_stream >> Rm;
 }
 
@@ -327,50 +475,62 @@ amc_float CurrentControlledVoltageSource::get_Rm() const {
   return Rm;
 }
 
-void CurrentControlledVoltageSource::place_stamp(amc_float time, amc_float** A,
-                                                 amc_float* x, amc_float* b,
-                                                 int method_order,
-                                                 int currents_position,
-                                                 bool uic) {
+int CurrentControlledVoltageSource::get_num_of_currents() const {
+  return 2;
+}
 
+void CurrentControlledVoltageSource::place_stamp(StampParameters& p) {
+  p.A[p.currents_position][get_node_ctrl_p()] -= 1;
+  p.A[p.currents_position][get_node_ctrl_n()] += 1;
+  p.A[p.currents_position+1][get_node_p()] -= 1;
+  p.A[p.currents_position+1][get_node_n()] += 1;
+  p.A[p.currents_position+1][p.currents_position] += Rm;
+  p.A[get_node_ctrl_p()][p.currents_position] += 1;
+  p.A[get_node_ctrl_n()][p.currents_position] -= 1;
+  p.A[get_node_p()][p.currents_position+1] += 1;
+  p.A[get_node_n()][p.currents_position+1] -= 1;
 }
 
 CurrentSource::CurrentSource(const std::string& name, int node_p, int node_n,
                              Signal::Handler signal)
-    : ArbitrarySourceElement(name, node_p, node_n, signal, 1) { }
+    : ArbitrarySourceElement(name, node_p, node_n, signal) { }
 
 CurrentSource::CurrentSource(const std::string& params)
-    : ArbitrarySourceElement(params, 1) { }
+    : ArbitrarySourceElement(params) { }
 
-void CurrentSource::place_stamp(amc_float time, amc_float** A, amc_float* x,
-                         amc_float* b, int method_order,
-                         int currents_position, bool uic) {
+int CurrentSource::get_num_of_currents() const {
+  return 0;
+}
 
+void CurrentSource::place_stamp(StampParameters& p) {
+  p.b[get_node_p()] -= signal->get_value(p.time);
+  p.b[get_node_n()] += signal->get_value(p.time);
 }
 
 VoltageSource::VoltageSource(const std::string& name, int node_p, int node_n,
                              Signal::Handler signal)
-    : ArbitrarySourceElement(name, node_p, node_n, signal, 1) { }
+    : ArbitrarySourceElement(name, node_p, node_n, signal) { }
 
 VoltageSource::VoltageSource(const std::string& params)
-    : ArbitrarySourceElement(params, 1) {}
+    : ArbitrarySourceElement(params) {}
 
-// TODO ignorando o signal!!!
-void VoltageSource::place_stamp(amc_float time, amc_float** A, amc_float* x,
-                                amc_float* b, int method_order,
-                                int currents_position, bool uic) {
-  A[get_node_p()][currents_position]+=1;
-  A[get_node_n()][currents_position]-=1;
-  A[currents_position][get_node_p()]-=1;
-  A[currents_position][get_node_n()]+=1;
-  b[currents_position]-= signal->get_value(time);
+int VoltageSource::get_num_of_currents() const {
+  return 1;
+}
+
+void VoltageSource::place_stamp(StampParameters& p) {
+  p.A[get_node_p()][p.currents_position] += 1;
+  p.A[get_node_n()][p.currents_position] -= 1;
+  p.A[p.currents_position][get_node_p()] -= 1;
+  p.A[p.currents_position][get_node_n()] += 1;
+  p.b[p.currents_position] -= signal->get_value(p.time);
 }
 
 IdealOpAmp::IdealOpAmp(const std::string& name, int out_p, int out_n, int in_p,
                        int in_n)
-    : Element(name, 2), out_p(out_p), out_n(out_n), in_p(in_p), in_n(in_n) { }
+    : Element(name), out_p(out_p), out_n(out_n), in_p(in_p), in_n(in_n) { }
 
-IdealOpAmp::IdealOpAmp(const std::string& params) :  Element(params, 2) {
+IdealOpAmp::IdealOpAmp(const std::string& params) :  Element(params) {
   line_stream >> out_p >> out_n >> in_p >> in_n;
 }
 
@@ -390,10 +550,15 @@ int IdealOpAmp::get_in_n() const {
   return in_n;
 }
 
-void IdealOpAmp::place_stamp(amc_float time, amc_float** A, amc_float* x,
-                         amc_float* b, int method_order,
-                         int currents_position, bool uic) {
+int IdealOpAmp::get_num_of_currents() const {
+  return 1;
+}
 
+void IdealOpAmp::place_stamp(StampParameters& p) {
+  p.A[p.currents_position][in_p] += 1;
+  p.A[p.currents_position][in_n] -= 1;
+  p.A[out_p][p.currents_position] += 1;
+  p.A[out_n][p.currents_position] -= 1;
 }
 
 }  // namespace amcircuit
