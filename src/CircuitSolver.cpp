@@ -123,14 +123,11 @@ Tran& CircuitSolver::find_first_tran_statement() {
 
 void CircuitSolver::prepare_circuit() {
   num_extra_lines = 0;
-  use_ic = config.get_uic();
   const std::vector<Element::Handler>& elements = netlist.get_elements();
   for(unsigned i = 0; i != elements.size(); ++i) {
     num_extra_lines += elements[i]->get_num_of_currents();
   }
   matrix.size = 1 + netlist.get_number_of_nodes() + num_extra_lines;
-  std::cout << "num_solution_samples = " << config.get_t_stop_s() << " / " << config.get_t_step_s() << " + 1" << std::endl;
-  std::cout << config.get_t_stop_s()/config.get_t_step_s() << std::endl;
   num_solution_samples =
       static_cast<int>(config.get_t_stop_s()/config.get_t_step_s()) + 1;
 
@@ -143,6 +140,13 @@ void CircuitSolver::prepare_circuit() {
   solutions = allocate_matrix(num_solution_samples, matrix.size);
 
   zero_vector(matrix.x, matrix.size);
+
+  stamp_parameters.A = matrix.A;
+  stamp_parameters.x = matrix.x;
+  stamp_parameters.b = matrix.b;
+  stamp_parameters.method_order = config.get_admo_order();
+  stamp_parameters.step_s = config.get_t_step_s()/config.get_internal_steps();
+  stamp_parameters.use_ic = config.get_uic();
 }
 
 void CircuitSolver::update_circuit(amc_float time) {
@@ -152,12 +156,19 @@ void CircuitSolver::update_circuit(amc_float time) {
   std::vector<Element::Handler>& elements = netlist.get_elements();
   int next_line = matrix.size - num_extra_lines;
 
+  stamp_parameters.time = time;
+
   for (unsigned i = 0; i != elements.size(); ++i) {
-    elements[i]->place_stamp(time, matrix.A, matrix.x, matrix.b,
-                             config.get_admo_order(), next_line, use_ic);
-    next_line += elements[i]->get_num_of_currents();
+    int num_of_currents = elements[i]->get_num_of_currents();
+    if (num_of_currents > 0) {
+      stamp_parameters.currents_position = next_line;
+      next_line += num_of_currents;
+    } else {
+      stamp_parameters.currents_position = -1;
+    }
+    elements[i]->place_stamp(stamp_parameters);
   }
-  use_ic = false;
+  stamp_parameters.use_ic = false;
 }
 
 std::string CircuitSolver::get_variables_header() const {

@@ -36,7 +36,6 @@ class CircuitSolver {
 
   Netlist& netlist;
   Tran& config;
-  bool use_ic;
   int num_extra_lines;
   int num_solution_samples;
   struct {
@@ -48,6 +47,7 @@ class CircuitSolver {
     int size;
   } matrix;
   amc_float** solutions;
+  StampParameters stamp_parameters;
 };
 
 }  // namespace amcircuit
