@@ -23,7 +23,7 @@ SCENARIO("Sinals should be created from a string", "[signal]") {
       params.erase(0,3);
       DC* dc(new DC(params));
       THEN("The DC parameters should be specified") {
-        REQUIRE(dc->get_value() == 20.0);
+        REQUIRE(dc->get_value(0) == 20.0);
       }
       delete dc;
     }
