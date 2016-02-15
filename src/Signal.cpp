@@ -2,6 +2,8 @@
 // Created by Hugo Sadok on 2/7/16.
 //
 
+#include <cmath>
+#include <iostream>
 #include "Signal.h"
 #include "helpers.h"
 #include "AMCircuitException.h"
@@ -17,7 +19,8 @@ inline Signal::~Signal() { }
 Signal::Handler Signal::get_signal(std::string params) {
   std::stringstream params_stream(params);
   std::string type;
-  params_stream >> type >> params;
+  params_stream >> type;
+  getline(params_stream, params);
   type = str_upper(type);
   if (type == "DC") return Handler(new DC(params));
   else if (type == "SIN") return Handler(new Sin(params));
@@ -38,9 +41,11 @@ DC::DC(const std::string& params) : Signal(params) {
   line_stream >> value;
 }
 
-amc_float DC::get_value() const {
+amc_float DC::get_value(amc_float) const {
   return value;
 }
+
+const amc_float Sin::PI = std::atan(1) * 4;
 
 Sin::Sin(amc_float offset, amc_float amplitude, amc_float freq_hz,
          amc_float time_delay, amc_float damping_factor, amc_float phase_deg,
@@ -80,6 +85,21 @@ amc_float Sin::get_phase_deg() const {
 
 int Sin::get_cycles() const {
   return cycles;
+}
+
+amc_float Sin::get_value(amc_float time) const {
+  amc_float t;
+  if (time <= time_delay) {
+    t = 0;
+  } else {
+    t = time - time_delay;
+  }
+  if (t*freq_hz > cycles) {
+    t = 0;
+  }
+
+  return offset + amplitude * std::exp(-damping_factor * t)
+                  * std::sin(2*PI*freq_hz*t+PI/180*phase_deg);
 }
 
 Pulse::Pulse(amc_float initial, amc_float pulsed, amc_float delay_time,
@@ -126,4 +146,34 @@ int Pulse::get_cycles() const {
   return cycles;
 }
 
-} // namespace amcircuit
+amc_float Pulse::get_value(amc_float time) const {
+  amc_float t;
+  if (time > period*cycles) {
+    t = 0;
+  } else {
+    t = fmod(time, period);
+  }
+
+  t -= delay_time;
+  if (t <= 0) {
+    return initial;
+  }
+
+  if (t < rise_time) {
+    return t * (pulsed - initial) / rise_time + initial;
+  }
+  t -= rise_time;
+
+  t -= pulse_width;
+  if (t <= 0) {
+    return pulsed;
+  }
+
+  if (t < fall_time) {
+    return t * (initial - pulsed) / fall_time + pulsed;
+  }
+
+  return initial;
+}
+
+}  // namespace amcircuit

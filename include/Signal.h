@@ -7,6 +7,7 @@
 
 #include <string>
 #include <sstream>
+#include <cmath>
 
 #include "AMCircuit.h"
 #include "ResourceHandler.h"
@@ -23,7 +24,7 @@ class Signal {
   static Signal::Handler get_signal(std::string params);
   static Signal::Handler get_signal(std::istream& stream);
 
-  virtual amc_float get_value() const {};
+  virtual amc_float get_value(amc_float time) const = 0;
 
  protected:
   std::stringstream line_stream;
@@ -38,7 +39,7 @@ class DC : public Signal {
   explicit DC(const amc_float value);
   explicit DC(const std::string& params);
 
-  amc_float get_value() const;
+  virtual amc_float get_value(amc_float time) const;
  private:
   amc_float value;
 };
@@ -58,6 +59,8 @@ class Sin : public Signal {
   amc_float get_phase_deg() const;
   int get_cycles() const;
 
+  virtual amc_float get_value(amc_float time) const;
+
  protected:
   amc_float offset;
   amc_float amplitude;
@@ -66,6 +69,8 @@ class Sin : public Signal {
   amc_float damping_factor;
   amc_float phase_deg;
   int cycles;
+
+  static const amc_float PI;
 };
 
 class Pulse : public Signal {
@@ -84,6 +89,8 @@ class Pulse : public Signal {
   amc_float get_period() const;
   int get_cycles() const;
 
+  virtual amc_float get_value(amc_float time) const;
+
  protected:
   amc_float initial;
   amc_float pulsed;
@@ -95,6 +102,6 @@ class Pulse : public Signal {
   int cycles;
 };
 
-} // namespace amcircuit
+}  // namespace amcircuit
 
 #endif //AMCIRCUIT_SIGNAL_H
