@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <ctime>
 #include <cstring>
 #include <CircuitSolver.h>
 
@@ -22,6 +23,7 @@ namespace amcircuit {
 
 CircuitSolver::CircuitSolver(Netlist* netlist)
     : netlist(*netlist), config(find_first_tran_statement()) {
+  srand (static_cast<unsigned>(time(0)));
   prepare_circuit();
   solve_circuit();
 }
@@ -90,22 +92,68 @@ inline void zero_matrix(amc_float** const matrix, const int size) {
   }
 }
 
+inline void CircuitSolver::add_solution(int index, amc_float time){
+  solutions[index][0] = time;
+  memcpy(solutions[index] + 1, stamp_parameters.x + 1,
+         (system_size - 1) * sizeof(amc_float));
+}
+
+inline bool converged(amc_float* last_solution, amc_float* new_solution,
+                      const int system_size) {
+  for (int i = 0; i < system_size; ++i) {
+    if (fabs(last_solution[i] - new_solution[i]) > ACCEPTABLE_NR_ERROR) {
+      return false;
+    }
+  }
+  return true;
+}
+
+inline void retry_initial(amc_float* last_solution, amc_float* new_solution,
+                          const int system_size) {
+  for (int i = 0; i < system_size; ++i) {
+    if (fabs(last_solution[i] - new_solution[i]) > ACCEPTABLE_NR_ERROR) {
+      new_solution[i] = - MAX_NR_GUESS + static_cast <amc_float> (rand()) /
+                           ( static_cast <amc_float> (RAND_MAX/(2*RAND_MAX)));
+    }
+  }
+}
+
 void CircuitSolver::solve_circuit() {
   amc_float t = 0;
   amc_float inner_step_s = config.get_t_step_s() / config.get_internal_steps();
   for (int i = 0; i < num_solution_samples; ++i) {
     amc_float inner_time = t;
     for (int j = 0; j < config.get_internal_steps(); ++j) {
-      update_circuit(inner_time);
-      solve_system(stamp_parameters.A, stamp_parameters.b, system_size);
-      amc_float* aux = stamp_parameters.x;
-      stamp_parameters.x = stamp_parameters.b;
-      stamp_parameters.b = aux;
+      int iterations = 0;
+      int ia_retries = 0;
+      while (1) {
+        update_circuit(inner_time);
+        solve_system(stamp_parameters.A, stamp_parameters.b, system_size);
+
+        // swapping vectors x and b, x will hold the current solution while b
+        // will hold the last
+        amc_float* last_solution = stamp_parameters.x;
+        stamp_parameters.x = stamp_parameters.b;
+        stamp_parameters.b = last_solution;
+
+        if (converged(last_solution, stamp_parameters.x, system_size)) {
+          break;
+        }
+
+        ++iterations;
+        if (iterations > NEWTON_RAPHSON_CYCLE_LIMIT) {
+          ++ia_retries;
+          retry_initial(last_solution, stamp_parameters.x, system_size);
+          if (ia_retries > NEWTON_RAPHSON_IA_RETRIES) {
+            throw NewtonRaphsonFailed(to_str(
+                  "Newton-Raphson failed to converge after "
+                  << NEWTON_RAPHSON_IA_RETRIES << " initialization retries."));
+          }
+        }
+      }
       inner_time += inner_step_s;
     }
-    solutions[i][0] = t;
-    memcpy(solutions[i] + 1, stamp_parameters.x + 1,
-           (system_size - 1) * sizeof(amc_float));
+    add_solution(i, t);
     t += config.get_t_step_s();
   }
 }

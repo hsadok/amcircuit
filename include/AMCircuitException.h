@@ -50,6 +50,11 @@ class SingularSystem : public AMCircuitException {
   explicit SingularSystem(const std::string&);
 };
 
+class NewtonRaphsonFailed : public AMCircuitException {
+ public:
+  explicit NewtonRaphsonFailed(const std::string&);
+};
+
 }  // namespace amcircuit
 
 #endif //AMCIRCUIT_AMCIRCUITEXCEPTION_H

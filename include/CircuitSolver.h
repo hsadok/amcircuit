@@ -30,6 +30,7 @@ class CircuitSolver {
   void prepare_circuit();
   void solve_circuit();
   void update_circuit(amc_float time);
+  inline void add_solution(int index, amc_float time);
   std::string get_variables_header() const;
   CircuitSolver(const CircuitSolver& other);
   CircuitSolver& operator=(const CircuitSolver& other);

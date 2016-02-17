@@ -31,4 +31,7 @@ InvalidIntegrationMethod::InvalidIntegrationMethod(const std::string& desc)
 SingularSystem::SingularSystem(const std::string& desc)
     : AMCircuitException(desc) { }
 
+NewtonRaphsonFailed::NewtonRaphsonFailed(const std::string& desc)
+    : AMCircuitException(desc) { }
+
 }  // namespace amcircuit
