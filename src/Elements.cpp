@@ -132,7 +132,7 @@ int Resistor::get_num_of_currents() const {
   return 0;
 }
 
-void Resistor::place_stamp(StampParameters& p) {
+void Resistor::place_stamp(const StampParameters& p) {
   p.A[get_node1()][get_node1()] += 1/R;
   p.A[get_node2()][get_node2()] += 1/R;
   p.A[get_node1()][get_node2()] -= 1/R;
@@ -156,7 +156,7 @@ int NonLinearResistor::get_num_of_currents() const {
   throw AMCircuitException("");
 }
 
-void NonLinearResistor::place_stamp(StampParameters& parameters) {
+void NonLinearResistor::place_stamp(const StampParameters& parameters) {
   // TODO NonLinearResistor stamp
 }
 
@@ -187,7 +187,7 @@ int VoltageControlledSwitch::get_num_of_currents() const {
   throw AMCircuitException("");
 }
 
-void VoltageControlledSwitch::place_stamp(StampParameters& parameters) {
+void VoltageControlledSwitch::place_stamp(const StampParameters& parameters) {
   // TODO VoltageControlledSwitch stamp
 }
 
@@ -220,7 +220,7 @@ int Inductor::get_num_of_currents() const {
   return 1;
 }
 
-void Inductor::place_stamp(StampParameters& p) {
+void Inductor::place_stamp(const StampParameters& p) {
   amc_float last_current, last_voltage;
   if (p.time ==0 || p.use_ic) {
     last_current = initial_current;
@@ -299,7 +299,7 @@ int Capacitor::get_num_of_currents() const {
   return 0;
 }
 
-void Capacitor::place_stamp(StampParameters& p) {
+void Capacitor::place_stamp(const StampParameters& p) {
   amc_float last_voltage, last_current;
   if (p.time ==0 || p.use_ic) {
     past_voltage = last_voltage = initial_voltage;
@@ -396,7 +396,7 @@ int VoltageControlledVoltageSource::get_num_of_currents() const {
   return 1;
 }
 
-void VoltageControlledVoltageSource::place_stamp(StampParameters& p) {
+void VoltageControlledVoltageSource::place_stamp(const StampParameters& p) {
   p.A[p.currents_position][get_node_p()] -= 1;
   p.A[p.currents_position][get_node_n()] += 1;
   p.A[p.currents_position][get_node_ctrl_p()] += Av;
@@ -424,7 +424,7 @@ int CurrentControlledCurrentSource::get_num_of_currents() const {
   return 1;
 }
 
-void CurrentControlledCurrentSource::place_stamp(StampParameters& p) {
+void CurrentControlledCurrentSource::place_stamp(const StampParameters& p) {
   p.A[p.currents_position][get_node_ctrl_p()] -= 1;
   p.A[p.currents_position][get_node_ctrl_n()] += 1;
   p.A[get_node_p()][p.currents_position] += Ai;
@@ -453,7 +453,7 @@ int VoltageControlledCurrentSource::get_num_of_currents() const {
   return 0;
 }
 
-void VoltageControlledCurrentSource::place_stamp(StampParameters& p) {
+void VoltageControlledCurrentSource::place_stamp(const StampParameters& p) {
   p.A[get_node_p()][get_node_ctrl_p()] += Gm;
   p.A[get_node_p()][get_node_ctrl_n()] -= Gm;
   p.A[get_node_n()][get_node_ctrl_p()] -= Gm;
@@ -479,7 +479,7 @@ int CurrentControlledVoltageSource::get_num_of_currents() const {
   return 2;
 }
 
-void CurrentControlledVoltageSource::place_stamp(StampParameters& p) {
+void CurrentControlledVoltageSource::place_stamp(const StampParameters& p) {
   p.A[p.currents_position][get_node_ctrl_p()] -= 1;
   p.A[p.currents_position][get_node_ctrl_n()] += 1;
   p.A[p.currents_position+1][get_node_p()] -= 1;
@@ -502,7 +502,7 @@ int CurrentSource::get_num_of_currents() const {
   return 0;
 }
 
-void CurrentSource::place_stamp(StampParameters& p) {
+void CurrentSource::place_stamp(const StampParameters& p) {
   p.b[get_node_p()] -= signal->get_value(p.time);
   p.b[get_node_n()] += signal->get_value(p.time);
 }
@@ -518,7 +518,7 @@ int VoltageSource::get_num_of_currents() const {
   return 1;
 }
 
-void VoltageSource::place_stamp(StampParameters& p) {
+void VoltageSource::place_stamp(const StampParameters& p) {
   p.A[get_node_p()][p.currents_position] += 1;
   p.A[get_node_n()][p.currents_position] -= 1;
   p.A[p.currents_position][get_node_p()] -= 1;
@@ -554,7 +554,7 @@ int IdealOpAmp::get_num_of_currents() const {
   return 1;
 }
 
-void IdealOpAmp::place_stamp(StampParameters& p) {
+void IdealOpAmp::place_stamp(const StampParameters& p) {
   p.A[p.currents_position][in_p] += 1;
   p.A[p.currents_position][in_n] -= 1;
   p.A[out_p][p.currents_position] += 1;

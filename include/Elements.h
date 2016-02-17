@@ -38,7 +38,7 @@ class Element {
   std::string get_name() const;
   virtual int get_num_of_currents() const = 0;
 //  virtual void flush_values();
-  virtual void place_stamp(StampParameters&) = 0;
+  virtual void place_stamp(const StampParameters&) = 0;
 
  protected:
   std::stringstream line_stream;
@@ -107,7 +107,7 @@ class Resistor : public DoubleTerminalElement {
   amc_float get_R() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  private:
   amc_float R;
@@ -121,7 +121,7 @@ class NonLinearResistor : public DoubleTerminalElement {
   const std::vector<amc_float>& get_R() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  protected:
   std::vector<amc_float> R;
@@ -139,7 +139,7 @@ class VoltageControlledSwitch : public ControlledElement {
   amc_float get_v_ref() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  private:
   amc_float g_on;
@@ -157,7 +157,7 @@ class Inductor : public DoubleTerminalElement {
   amc_float get_initial_current() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  private:
   amc_float L;
@@ -175,7 +175,7 @@ class Capacitor : public DoubleTerminalElement {
   amc_float get_initial_voltage() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  private:
   amc_float C;
@@ -193,7 +193,7 @@ class VoltageControlledVoltageSource : public ControlledElement {
   amc_float get_Av() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  private:
   amc_float Av;
@@ -208,7 +208,7 @@ class CurrentControlledCurrentSource : public ControlledElement {
   amc_float get_Ai() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  private:
   amc_float Ai;
@@ -223,7 +223,7 @@ class VoltageControlledCurrentSource : public ControlledElement {
   amc_float get_Gm() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  private:
   amc_float Gm;
@@ -238,7 +238,7 @@ class CurrentControlledVoltageSource : public ControlledElement {
   amc_float get_Rm() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  private:
   amc_float Rm;
@@ -251,7 +251,7 @@ class CurrentSource : public ArbitrarySourceElement {
   explicit CurrentSource(const std::string& params);
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 };
 
 class VoltageSource : public ArbitrarySourceElement {
@@ -261,7 +261,7 @@ class VoltageSource : public ArbitrarySourceElement {
   explicit VoltageSource(const std::string& params);
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 };
 
 class IdealOpAmp : public Element {
@@ -275,7 +275,7 @@ class IdealOpAmp : public Element {
   int get_in_n() const;
 
   virtual int get_num_of_currents() const;
-  virtual void place_stamp(StampParameters&);
+  virtual void place_stamp(const StampParameters&);
 
  private:
   int out_p;
