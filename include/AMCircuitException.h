@@ -42,7 +42,7 @@ class IncompleteNetList : public AMCircuitException {
 
 class InvalidIntegrationMethod : public AMCircuitException {
  public:
-  explicit  InvalidIntegrationMethod(const std::string&);
+  explicit InvalidIntegrationMethod(const std::string&);
 };
 
 class SingularSystem : public AMCircuitException {
