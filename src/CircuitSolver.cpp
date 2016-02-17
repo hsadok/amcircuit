@@ -7,6 +7,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <cstring>
+#include <CircuitSolver.h>
 
 #include "CircuitSolver.h"
 #include "Elements.h"
@@ -26,19 +27,17 @@ CircuitSolver::CircuitSolver(Netlist* netlist)
 }
 
 CircuitSolver::~CircuitSolver() {
-  free_array(matrix.A, 2, matrix.size);
-  free_array(matrix.L, 2, matrix.size);
+  free_array(stamp_parameters.A, 2, system_size);
   free_array(solutions, 2, num_solution_samples);
-  free(matrix.b);
-  free(matrix.x);
-  free(matrix.c);
+  free(stamp_parameters.b);
+  free(stamp_parameters.x);
 }
 
 void CircuitSolver::write_to_stream(std::ostream& ostream) const {
   ostream << get_variables_header() << std::endl;
   for (int sample = 0; sample < num_solution_samples; ++sample) {
     ostream << solutions[sample][0];
-    for (int i = 1; i < matrix.size; ++i) {
+    for (int i = 1; i < system_size; ++i) {
       ostream << " " << solutions[sample][i];
     }
     ostream << std::endl;
@@ -67,7 +66,7 @@ inline amc_float* allocate_vector(const int size) {
 
 inline amc_float** allocate_matrix(const int size1, const int size2) {
   amc_float** matrix;
-  if (!(matrix = (amc_float**) malloc_array(sizeof(*matrix), 2, size1, size2))){
+  if (!(matrix = (amc_float**) malloc_array(sizeof(**matrix), 2, size1, size2))){
     throw std::bad_alloc();
   }
   return matrix;
@@ -98,13 +97,15 @@ void CircuitSolver::solve_circuit() {
     amc_float inner_time = t;
     for (int j = 0; j < config.get_internal_steps(); ++j) {
       update_circuit(inner_time);
-      lu_decomposition(matrix.L, matrix.A, matrix.size, 1);
-      solve_lu(matrix.L, matrix.A, matrix.x, matrix.b, matrix.c, matrix.size,1);
+      solve_system(stamp_parameters.A, stamp_parameters.b, system_size);
+      amc_float* aux = stamp_parameters.x;
+      stamp_parameters.x = stamp_parameters.b;
+      stamp_parameters.b = aux;
       inner_time += inner_step_s;
     }
     solutions[i][0] = t;
-    memcpy(solutions[i] + 1, matrix.x + 1,
-           (matrix.size - 1) * sizeof(amc_float));
+    memcpy(solutions[i] + 1, stamp_parameters.x + 1,
+           (system_size - 1) * sizeof(amc_float));
     t += config.get_t_step_s();
   }
 }
@@ -127,34 +128,28 @@ void CircuitSolver::prepare_circuit() {
   for(unsigned i = 0; i != elements.size(); ++i) {
     num_extra_lines += elements[i]->get_num_of_currents();
   }
-  matrix.size = 1 + netlist.get_number_of_nodes() + num_extra_lines;
+  system_size = 1 + netlist.get_number_of_nodes() + num_extra_lines;
   num_solution_samples =
       static_cast<int>(config.get_t_stop_s()/config.get_t_step_s()) + 1;
 
-  matrix.A = allocate_matrix(matrix.size);
-  matrix.L = allocate_matrix(matrix.size);
-  matrix.b = allocate_vector(matrix.size);
-  matrix.x = allocate_vector(matrix.size);
-  matrix.c = allocate_vector(matrix.size);
+  stamp_parameters.A = allocate_matrix(system_size);
+  stamp_parameters.b = allocate_vector(system_size);
+  stamp_parameters.x = allocate_vector(system_size);
+  solutions = allocate_matrix(num_solution_samples, system_size);
 
-  solutions = allocate_matrix(num_solution_samples, matrix.size);
+  zero_vector(stamp_parameters.x, system_size);
 
-  zero_vector(matrix.x, matrix.size);
-
-  stamp_parameters.A = matrix.A;
-  stamp_parameters.x = matrix.x;
-  stamp_parameters.b = matrix.b;
   stamp_parameters.method_order = config.get_admo_order();
   stamp_parameters.step_s = config.get_t_step_s()/config.get_internal_steps();
   stamp_parameters.use_ic = config.get_uic();
 }
 
 void CircuitSolver::update_circuit(amc_float time) {
-  zero_matrix(matrix.A, matrix.size);
-  zero_vector(matrix.b, matrix.size);
+  zero_matrix(stamp_parameters.A, system_size);
+  zero_vector(stamp_parameters.b, system_size);
 
   std::vector<Element::Handler>& elements = netlist.get_elements();
-  int next_line = matrix.size - num_extra_lines;
+  int next_line = system_size - num_extra_lines;
 
   stamp_parameters.time = time;
 
@@ -173,7 +168,7 @@ void CircuitSolver::update_circuit(amc_float time) {
 
 std::string CircuitSolver::get_variables_header() const {
   std::stringstream header;
-  int num_nodes = matrix.size - num_extra_lines;
+  int num_nodes = system_size - num_extra_lines;
 
   header << "t";
   for (int i = 1; i < num_nodes; ++i) { header << " " << i; }

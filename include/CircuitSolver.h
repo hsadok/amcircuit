@@ -38,14 +38,7 @@ class CircuitSolver {
   Tran& config;
   int num_extra_lines;
   int num_solution_samples;
-  struct {
-    amc_float** A;
-    amc_float* b;
-    amc_float** L;
-    amc_float* x;
-    amc_float* c;
-    int size;
-  } matrix;
+  int system_size;
   amc_float** solutions;
   StampParameters stamp_parameters;
 };

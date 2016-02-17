@@ -24,12 +24,12 @@ SCENARIO("A linear system should be decomposed and resolved",
     amc_float* b;
     amc_float* c;
     amc_float* x;
-    b = (amc_float*) malloc(sizeof(b) * system_size);
-    c = (amc_float*) malloc(sizeof(c) * system_size);
-    x = (amc_float*) malloc(sizeof(x) * system_size);
+    b = (amc_float*) malloc(sizeof(*b) * system_size);
+    c = (amc_float*) malloc(sizeof(*c) * system_size);
+    x = (amc_float*) malloc(sizeof(*x) * system_size);
 
-    A = (amc_float**) malloc_array(sizeof(*A), 2, system_size, system_size);
-    L = (amc_float**) malloc_array(sizeof(*L), 2, system_size, system_size);
+    A = (amc_float**) malloc_array(sizeof(**A), 2, system_size, system_size+1);
+    L = (amc_float**) malloc_array(sizeof(**L), 2, system_size, system_size);
 
     A[0][0]=-4; A[0][1]= 1; A[0][2]= 0; A[0][3]= 1; A[0][4]= 0; A[0][5]= 0; A[0][6]= 0; A[0][7]= 0; A[0][8]= 0;
     A[1][0]= 1; A[1][1]=-4; A[1][2]= 1; A[1][3]= 0; A[1][4]= 1; A[1][5]= 0; A[1][6]= 0; A[1][7]= 0; A[1][8]= 0;
@@ -55,16 +55,33 @@ SCENARIO("A linear system should be decomposed and resolved",
       lu_decomposition(L, A, system_size);
       solve_lu(L, A, x, b, c, system_size);
 
-      REQUIRE( x[0] == Approx( 0.07142 ) );
-      REQUIRE( x[1] == Approx( 0.09821 ) );
-      REQUIRE( x[2] == Approx( 0.07142 ) );
-      REQUIRE( x[3] == Approx( 0.18750 ) );
-      REQUIRE( x[4] == Approx( 0.25000 ) );
-      REQUIRE( x[5] == Approx( 0.18750 ) );
-      REQUIRE( x[6] == Approx( 0.42857 ) );
-      REQUIRE( x[7] == Approx( 0.52678 ) );
-      REQUIRE( x[8] == Approx( 0.42857 ) );
+      CHECK( x[0] == Approx( 0.07142 ) );
+      CHECK( x[1] == Approx( 0.09821 ) );
+      CHECK( x[2] == Approx( 0.07142 ) );
+      CHECK( x[3] == Approx( 0.18750 ) );
+      CHECK( x[4] == Approx( 0.25000 ) );
+      CHECK( x[5] == Approx( 0.18750 ) );
+      CHECK( x[6] == Approx( 0.42857 ) );
+      CHECK( x[7] == Approx( 0.52678 ) );
+      CHECK( x[8] == Approx( 0.42857 ) );
     }
+
+    WHEN("solving by LU Intel method") {
+      int* ri = (int*) malloc(sizeof(*ri) * system_size);
+      PII_LUDecomposition(A, system_size, ri);
+      solve_lu(A, A, x, b, c, system_size);
+
+      CHECK( x[0] == Approx( 0.07142 ) );
+      CHECK( x[1] == Approx( 0.09821 ) );
+      CHECK( x[2] == Approx( 0.07142 ) );
+      CHECK( x[3] == Approx( 0.18750 ) );
+      CHECK( x[4] == Approx( 0.25000 ) );
+      CHECK( x[5] == Approx( 0.18750 ) );
+      CHECK( x[6] == Approx( 0.42857 ) );
+      CHECK( x[7] == Approx( 0.52678 ) );
+      CHECK( x[8] == Approx( 0.42857 ) );
+    }
+
 
     free_array(A, 2, system_size);
     free_array(L, 2, system_size);
@@ -79,12 +96,12 @@ SCENARIO("A linear system should be decomposed and resolved",
     amc_float* b;
     amc_float* c;
     amc_float* x;
-    b = (amc_float*) malloc(sizeof(b) * system_size);
-    c = (amc_float*) malloc(sizeof(c) * system_size);
-    x = (amc_float*) malloc(sizeof(x) * system_size);
+    b = (amc_float*) malloc(sizeof(*b) * system_size);
+    c = (amc_float*) malloc(sizeof(*c) * system_size);
+    x = (amc_float*) malloc(sizeof(*x) * system_size);
 
-    A = (amc_float**) malloc_array(sizeof(*A), 2, system_size, system_size);
-    L = (amc_float**) malloc_array(sizeof(*L), 2, system_size, system_size);
+    A = (amc_float**) malloc_array(sizeof(**A), 2, system_size, system_size);
+    L = (amc_float**) malloc_array(sizeof(**L), 2, system_size, system_size);
 
     A[0][0]=0.001; A[0][1]= 0; A[0][2]= -0.001; A[0][3]= -1;
     A[1][0]= 0; A[1][1]=0.001; A[1][2]= -0.001; A[1][3]= 1;
@@ -99,10 +116,28 @@ SCENARIO("A linear system should be decomposed and resolved",
     WHEN("solving by LU decomposition") {
       lu_decomposition(L, A, system_size, 1);
       solve_lu(L, A, x, b, c, system_size, 1);
-      REQUIRE( x[1] == Approx( 10.00000 ) );
-      REQUIRE( x[2] == Approx( 5.00000 ) );
-      REQUIRE( x[3] == Approx( -0.00500 ) );
+      CHECK( x[1] == Approx( 10.00000 ) );
+      CHECK( x[2] == Approx( 5.00000 ) );
+      CHECK( x[3] == Approx( -0.00500 ) );
     }
+
+    WHEN("solving by Moreirao") {
+      solve_system(A, b, system_size);
+      CHECK( b[1] == Approx( 10.00000 ) );
+      CHECK( b[2] == Approx( 5.00000 ) );
+      CHECK( b[3] == Approx( -0.00500 ) );
+    }
+
+//    WHEN("solving by LU Intel method") {
+//      int* ri = (int*) malloc(sizeof(*ri) * system_size);
+//      PII_LUDecomposition(A, system_size, ri, 0);
+//      print_matrix(A, system_size);
+//      solve_lu(A, A, x, b, c, system_size, 0);
+//      CHECK( x[1] == Approx( 10.00000 ) );
+//      CHECK( x[2] == Approx( 5.00000 ) );
+//      CHECK( x[3] == Approx( -0.00500 ) );
+//    }
+
     free_array(A, 2, system_size);
     free_array(L, 2, system_size);
     free(b);
