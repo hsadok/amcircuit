@@ -28,4 +28,7 @@ IncompleteNetList::IncompleteNetList(const std::string& desc)
 InvalidIntegrationMethod::InvalidIntegrationMethod(const std::string& desc)
     : AMCircuitException(desc) { }
 
+SingularSystem::SingularSystem(const std::string& desc)
+    : AMCircuitException(desc) { }
+
 }  // namespace amcircuit

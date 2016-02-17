@@ -45,6 +45,11 @@ class InvalidIntegrationMethod : public AMCircuitException {
   explicit  InvalidIntegrationMethod(__const std::string&);
 };
 
+class SingularSystem : public AMCircuitException {
+ public:
+  explicit SingularSystem(const std::string&);
+};
+
 }  // namespace amcircuit
 
 #endif //AMCIRCUIT_AMCIRCUITEXCEPTION_H

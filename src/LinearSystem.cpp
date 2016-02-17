@@ -1,12 +1,12 @@
 //
 // Created by Hugo Sadok on 2/11/16.
 //
+#include <cmath>
+
 
 #include "AMCircuit.h"
 #include "LinearSystem.h"
-
-#include <iostream>
-#include <cmath>
+#include "AMCircuitException.h"
 
 namespace amcircuit {
 // Use U for the original matrix as well as the output U from the decomposition
@@ -111,7 +111,7 @@ void solve_lu(amc_float **L, amc_float **U, amc_float *X, amc_float *B,
 // Solve linear system using Gauss-Jordan with pivotal compensation
 // adapted from Moreirao (ACMQ http://www.coe.ufrj.br/~acmq/)
 // A is the entire system, it includes A and b the output x will be on b
-int solve_system(amc_float** A, amc_float* b_x, const int size) {
+void solve_system(amc_float** A, amc_float* b_x, const int size) {
   int i, j, l, a;
   double t, p;
 
@@ -135,8 +135,7 @@ int solve_system(amc_float** A, amc_float* b_x, const int size) {
       b_x[a]=p;
     }
     if (fabs(t) < 1e-9) {
-      printf("Sistema singular\n");
-      return 1;
+      throw SingularSystem("System is singular, no solution.");
     }
 
     b_x[i] /= t;
@@ -159,7 +158,6 @@ int solve_system(amc_float** A, amc_float* b_x, const int size) {
       }
     }
   }
-  return 0;
 }
 
 }  // namespace amcircuit

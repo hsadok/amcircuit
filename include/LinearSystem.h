@@ -21,7 +21,7 @@ void solve_lu(amc_float **L, amc_float **U, amc_float *x, amc_float *b,
 
 
 bool PII_LUDecomposition(amc_float** A, const int n, int* ri,const int first_index = 0);
-int solve_system(amc_float** A, amc_float* b_x, const int size);
+void solve_system(amc_float** A, amc_float* b_x, const int size);
 }  // namespace amcircuit
 
 #endif //AMCIRCUIT_LINEARSYSTEM_H
