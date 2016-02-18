@@ -44,14 +44,14 @@ SCENARIO("Elements should be created from a string", "[elements]") {
         REQUIRE(nlr->get_name() == "N123");
         REQUIRE(nlr->get_node1() == 4);
         REQUIRE(nlr->get_node2() == 3);
-        REQUIRE(nlr->get_R()[0] == 1);
-        REQUIRE(nlr->get_R()[1] == 2);
-        REQUIRE(nlr->get_R()[2] == 3);
-        REQUIRE(nlr->get_R()[3] == 4);
-        REQUIRE(nlr->get_R()[4] == 5);
-        REQUIRE(nlr->get_R()[5] == 6);
-        REQUIRE(nlr->get_R()[6] == 7);
-        REQUIRE(nlr->get_R()[7] == 8);
+        REQUIRE(nlr->get_coordinates()[0].first == 1);
+        REQUIRE(nlr->get_coordinates()[0].second == 2);
+        REQUIRE(nlr->get_coordinates()[1].first == 3);
+        REQUIRE(nlr->get_coordinates()[1].second == 4);
+        REQUIRE(nlr->get_coordinates()[2].first == 5);
+        REQUIRE(nlr->get_coordinates()[2].second == 6);
+        REQUIRE(nlr->get_coordinates()[3].first == 7);
+        REQUIRE(nlr->get_coordinates()[3].second == 8);
       }
       delete nlr;
     }
