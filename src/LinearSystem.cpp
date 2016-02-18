@@ -35,7 +35,7 @@ void solve_lu(amc_float **L, amc_float **U, amc_float *X, amc_float *B,
 
   //Lc = b
   for (i = first_index; i < size; ++i){
-    double aux = 0;
+    amc_float aux = 0;
     for(j = first_index; j < i; ++j){
       aux += L[i][j]*C[j];
     }
@@ -44,7 +44,7 @@ void solve_lu(amc_float **L, amc_float **U, amc_float *X, amc_float *B,
 
   //Ux = c
   for (i = size - 1; i >= first_index; --i){
-    double aux = 0;
+    amc_float aux = 0;
     for (j = i+1; j < size; ++j){
       aux += U[i][j]*X[j];
     }
@@ -57,7 +57,7 @@ void solve_lu(amc_float **L, amc_float **U, amc_float *X, amc_float *B,
 // A is the entire system, it includes A and b the output x will be on b
 void solve_system(amc_float** A, amc_float* b_x, const int size) {
   int i, j, l, a;
-  double t, p;
+  amc_float t, p;
 
   for (i=1; i < size; i++) {
     t=0.0;
