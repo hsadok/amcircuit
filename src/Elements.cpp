@@ -222,43 +222,40 @@ int Inductor::get_num_of_currents() const {
 
 void Inductor::place_stamp(const StampParameters& p) {
   amc_float last_current, last_voltage;
-  if (p.time ==0 || p.use_ic) {
+  int method_order = p.method_order;
+  if (p.use_ic) {
     last_current = initial_current;
     past_voltages[1] = past_voltages[0] = last_voltage = 0;
+    method_order = 1;
   } else {
     last_current = p.x[p.currents_position];
     last_voltage = p.x[get_node1()] - p.x[get_node2()];
   }
 
-  p.A[get_node1()][p.currents_position] += 1;
-  p.A[get_node2()][p.currents_position] -= 1;
-  p.A[p.currents_position][get_node1()] -= 1;
-  p.A[p.currents_position][get_node2()] += 1;
+  // Modelled using a resistor in series with a voltage source
+  amc_float R;
+  amc_float V;
 
-  switch (p.method_order) {
+  switch (method_order) {
     case 1: {
-      p.A[p.currents_position][p.currents_position] += L/p.step_s;
-      p.b[p.currents_position] += L/p.step_s * last_current;
+      R = L/p.step_s;
+      V = R * last_current;
       break;
     }
     case 2: {
-      p.A[p.currents_position][p.currents_position] += 2*L/p.step_s;
-      p.b[p.currents_position] += 2*L/p.step_s*last_current + last_voltage;
+      R = 2 * L/p.step_s;
+      V = R * last_current + last_voltage;
       break;
     }
     case 3: {
-      p.A[p.currents_position][p.currents_position] += 12.0/5.0*L/p.step_s;
-      p.b[p.currents_position] += 12.0/5.0*L/p.step_s*last_current
-                                  - 1.0/5.0*past_voltages[0]
-                                  + 8.0/5.0*last_voltage;
+      R = 12.0/5.0 * L/p.step_s;
+      V = R*last_current - 1.0/5.0 * past_voltages[0] + 8.0/5.0 * last_voltage;
       break;
     }
     case 4: {
-      p.A[p.currents_position][p.currents_position] += 8.0/3.0*L/p.step_s;
-      p.b[p.currents_position] += 8.0/3.0*L/p.step_s*last_current
-                                  + 1.0/9.0*past_voltages[1]
-                                  - 5.0/9.0*past_voltages[0]
-                                  + 19.0/9.0*last_voltage;
+      R = 8.0/3.0 * L/p.step_s;
+      V = R * last_current + 1.0/9.0 * past_voltages[1]
+          - 5.0/9.0 * past_voltages[0] + 19.0/9.0 * last_voltage;
       break;
     }
     default: {
@@ -266,6 +263,14 @@ void Inductor::place_stamp(const StampParameters& p) {
           to_str("Invalid Adams-Moulton order: " << p.method_order));
     }
   }
+
+  p.A[get_node1()][p.currents_position] += 1;
+  p.A[get_node2()][p.currents_position] -= 1;
+  p.A[p.currents_position][get_node1()] -= 1;
+  p.A[p.currents_position][get_node2()] += 1;
+  p.A[p.currents_position][p.currents_position] += R;
+  p.b[p.currents_position] += V;
+
   past_voltages[1] = past_voltages[0];
   past_voltages[0] = last_voltage;
 }
@@ -301,68 +306,46 @@ int Capacitor::get_num_of_currents() const {
 
 void Capacitor::place_stamp(const StampParameters& p) {
   amc_float last_voltage, last_current;
-  if (p.time ==0 || p.use_ic) {
-    past_voltage = last_voltage = initial_voltage;
-    past_currents[2] = past_currents[1] = past_currents[0] = 0;
+  int method_order = p.method_order;
+  if (p.use_ic) {
+    last_voltage = initial_voltage;
+    past_currents[1] = past_currents[0] = last_current = 0;
+    method_order = 1;
+    last_G = 0;
+    last_I = 0;
   } else {
+    if(p.new_nr_cycle) {
+      last_G = last_nr_G;
+      last_I = last_nr_I;
+    }
     last_voltage = p.x[get_node1()] - p.x[get_node2()];
+    last_current = last_G * last_voltage - last_I;
   }
 
-  switch (p.method_order) {
+  //  Modeled using a conductance G in parallel with a current source I
+  amc_float G;
+  amc_float I;
+
+  switch (method_order) {
     case 1: {
-      last_current = (past_voltage - last_voltage) / (p.step_s/C);
-      p.A[get_node1()][get_node1()] += C/p.step_s;
-      p.A[get_node2()][get_node2()] += C/p.step_s;
-      p.A[get_node1()][get_node2()] -= C/p.step_s;
-      p.A[get_node2()][get_node1()] -= C/p.step_s;
-      p.b[get_node1()] += C/p.step_s * last_voltage;
-      p.b[get_node1()] -= C/p.step_s * last_voltage;
+      G = C/p.step_s;
+      I = G * last_voltage;
       break;
     }
     case 2: {
-      last_current = (past_voltage + 1.0/2.0 * p.step_s/C * past_currents[0]
-                      - last_voltage) / (p.step_s/(2*C));
-      p.A[get_node1()][get_node1()] += 2*C/p.step_s;
-      p.A[get_node2()][get_node2()] += 2*C/p.step_s;
-      p.A[get_node1()][get_node2()] -= 2*C/p.step_s;
-      p.A[get_node2()][get_node1()] -= 2*C/p.step_s;
-      p.b[get_node1()] += 2 * C/p.step_s * last_voltage + last_current;
-      p.b[get_node1()] -= 2 * C/p.step_s * last_voltage + last_current;
+      G = 2 * C/p.step_s;
+      I = G * last_voltage + last_current;
       break;
     }
     case 3: {
-      last_current = (past_voltage - 1.0/12.0 * p.step_s/C * past_currents[1]
-                                   + 8.0/12.0 * p.step_s/C * past_currents[0]
-                                   - last_voltage)
-                     / (5.0/12.0 * p.step_s/C);
-      p.A[get_node1()][get_node1()] += 12.0/5.0*C/p.step_s;
-      p.A[get_node2()][get_node2()] += 12.0/5.0*C/p.step_s;
-      p.A[get_node1()][get_node2()] -= 12.0/5.0*C/p.step_s;
-      p.A[get_node2()][get_node1()] -= 12.0/5.0*C/p.step_s;
-      p.b[get_node1()] += 12.0/5.0*C/p.step_s * last_voltage
-                          - 1.0/5.0*past_currents[0] + 8.0/5.0*last_current;
-      p.b[get_node1()] -= 12.0/5.0*C/p.step_s * last_voltage
-                          - 1.0/5.0*past_currents[0] + 8.0/5.0*last_current;
+      G =  12.0/5.0*C/p.step_s;
+      I = G * last_voltage - 1.0/5.0 * past_currents[0] + 8.0/5.0*last_current;
       break;
     }
     case 4: {
-      last_current = (past_voltage +  1.0/24.0 * p.step_s/C * past_currents[2]
-                                   -  5.0/24.0 * p.step_s/C * past_currents[1]
-                                   + 15.0/24.0 * p.step_s/C * past_currents[0]
-                                   - last_voltage)
-                     / (3.0/8.0 * p.step_s/C);
-      p.A[get_node1()][get_node1()] += 8.0/3.0*C/p.step_s;
-      p.A[get_node2()][get_node2()] += 8.0/3.0*C/p.step_s;
-      p.A[get_node1()][get_node2()] -= 8.0/3.0*C/p.step_s;
-      p.A[get_node2()][get_node1()] -= 8.0/3.0*C/p.step_s;
-      p.b[get_node1()] += 8.0/3.0 * C/p.step_s * last_voltage
-                          + 1.0/9.0 * past_currents[1]
-                          - 5.0/9.0 * past_currents[0]
-                          + 19.0/9.0 * last_current;
-      p.b[get_node1()] -= 8.0/3.0 * C/p.step_s * last_voltage
-                          + 1.0/9.0 * past_currents[1]
-                          - 5.0/9.0 * past_currents[0]
-                          + 19.0/9.0 * last_current;
+      G = 8.0/3.0*C/p.step_s;
+      I = G * last_voltage + 1.0/9.0 * past_currents[1]
+          - 5.0/9.0 * past_currents[0] + 19.0/9.0 * last_current;
       break;
     }
     default: {
@@ -371,10 +354,18 @@ void Capacitor::place_stamp(const StampParameters& p) {
     }
   }
 
-  past_currents[2] = past_currents[1];
+  p.A[get_node1()][get_node1()] += G;
+  p.A[get_node2()][get_node2()] += G;
+  p.A[get_node1()][get_node2()] -= G;
+  p.A[get_node2()][get_node1()] -= G;
+  p.b[get_node1()] += I;
+  p.b[get_node2()] -= I;
+
+  last_nr_G = G;
+  last_nr_I = I;
+
   past_currents[1] = past_currents[0];
   past_currents[0] = last_current;
-  past_voltage = last_voltage;
 }
 
 VoltageControlledVoltageSource::VoltageControlledVoltageSource(

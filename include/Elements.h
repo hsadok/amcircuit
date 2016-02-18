@@ -19,10 +19,12 @@ struct StampParameters {
   amc_float** A;
   amc_float* x;
   amc_float* b;
+  amc_float* last_nr_trial;
   int method_order;
   amc_float step_s;
-  bool use_ic;
 
+  bool use_ic;
+  bool new_nr_cycle;
   amc_float time;
   int currents_position;
 };
@@ -180,8 +182,11 @@ class Capacitor : public DoubleTerminalElement {
  private:
   amc_float C;
   amc_float initial_voltage;
-  amc_float past_currents[3];
-  amc_float past_voltage;
+  amc_float past_currents[2];
+  amc_float last_G;
+  amc_float last_I;
+  amc_float last_nr_G;
+  amc_float last_nr_I;
 };
 
 class VoltageControlledVoltageSource : public ControlledElement {
