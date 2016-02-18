@@ -19,8 +19,6 @@ void lu_decomposition(amc_float **L, amc_float **U, const int size,
 void solve_lu(amc_float **L, amc_float **U, amc_float *x, amc_float *b,
              amc_float* c, const int size, const int first_index = 0);
 
-
-bool PII_LUDecomposition(amc_float** A, const int n, int* ri,const int first_index = 0);
 void solve_system(amc_float** A, amc_float* b_x, const int size);
 }  // namespace amcircuit
 

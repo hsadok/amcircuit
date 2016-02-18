@@ -28,62 +28,6 @@ void lu_decomposition(amc_float **L, amc_float **U, const int size,
   }
 }
 
-
-bool PII_LUDecomposition(amc_float** A, const int n, int* ri,const int first_index){
-  // Factors "m" matrix into A=LU where L is lower triangular and U is upper
-  // triangular. The matrix is overwritten by LU with the diagonal elements
-  // of L (which are unity) not stored. This must be a square n x n matrix.
-  // ri[n] and irow[n] are scratch vectors used by LUBackSubstitution.
-  // d is returned +-1 indicating that the
-  // number of row interchanges was even or odd respectively.
-  int i;
-
-  int size, last, end, pe;
-  int last8, end8, pe8;
-  amc_float frcp, tmp, pivel;
-  register amc_float* tmpptr;
-  amc_float* ptr2, * ptr;
-
-  amc_float det;
-
-  det = 1.0;
-  // Initialize the pointer vector.
-  for (i = first_index; i < n; i++) { ri[i] = i; }
-
-  // LU factorization.
-  for (int p = first_index+1; p <= n - 1; p++) {
-    // Find pivot element.
-    for (i = p + 1; i <= n; i++) {
-      if (std::abs(A[ri[i - 1]][p - 1]) > std::abs(A[ri[p - 1]][p - 1])) {
-        // Switch the index for the p-1 pivot row if necessary.
-        int t = ri[p - 1];
-        ri[p - 1] = ri[i - 1];
-        ri[i - 1] = t;
-        det = -det;
-      }
-    }
-    if (A[ri[p - 1]][p - 1] == 0) { // The matrix is singular.
-      return false;
-    }
-
-    // Multiply the diagonal elements.
-    det = det * A[ri[p - 1]][p - 1];
-
-    for (i = p + 1; i <= n; i++) {
-      A[ri[i - 1]][p - 1] /= A[ri[p - 1]][p - 1];
-
-      // Eliminate [p-1].
-      for (int j = p + 1; j <= n; j++) {
-        A[ri[i - 1]][j - 1] -= A[ri[i - 1]][p - 1] * A[ri[p - 1]][j - 1];
-      }
-    }
-  }
-
-  det = det * A[ri[n - 1]][n - 1];
-  return det != 0.0;
-}
-
-
 // C is not an input, it must be a vector allocated with the right size
 void solve_lu(amc_float **L, amc_float **U, amc_float *X, amc_float *B,
              amc_float* C, const int size, const int first_index) {
