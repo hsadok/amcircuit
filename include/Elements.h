@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <utility>
 
 #include "AMCircuit.h"
 #include "Signal.h"
@@ -117,16 +118,17 @@ class Resistor : public DoubleTerminalElement {
 
 class NonLinearResistor : public DoubleTerminalElement {
  public:
+  typedef std::pair<amc_float, amc_float> coordinate;
   NonLinearResistor(const std::string& name, int node1, int node2,
-                    const std::vector<amc_float>& R);
+                    const std::vector<coordinate>& coordinates);
   explicit NonLinearResistor(const std::string& params);
-  const std::vector<amc_float>& get_R() const;
+  const std::vector<coordinate>& get_coordinates() const;
 
   virtual int get_num_of_currents() const;
   virtual void place_stamp(const StampParameters&);
 
  protected:
-  std::vector<amc_float> R;
+  std::vector<coordinate> coordinates;
 };
 
 class VoltageControlledSwitch : public ControlledElement {

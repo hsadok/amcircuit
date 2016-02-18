@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <iostream>
+#include <algorithm>
 
 #include "Elements.h"
 #include "helpers.h"
@@ -140,24 +141,52 @@ void Resistor::place_stamp(const StampParameters& p) {
 }
 
 NonLinearResistor::NonLinearResistor(const std::string& name, int node1,
-                                     int node2, const std::vector<amc_float>& R)
-    : DoubleTerminalElement(name, node1, node2), R(R) { }
-
-NonLinearResistor::NonLinearResistor(const std::string& params)
-    : DoubleTerminalElement(params), R(8) {
-  line_stream >> R[0] >> R[1] >> R[2] >> R[3] >> R[4] >> R[5] >> R[6] >> R[7];
+                                     int node2,
+                                     const std::vector<coordinate>& coordinates)
+    : DoubleTerminalElement(name, node1, node2), coordinates(coordinates) {
+  std::sort(coordinates.begin(), coordinates.end());
 }
 
-const std::vector<amc_float>& NonLinearResistor::get_R() const {
-  return R;
+NonLinearResistor::NonLinearResistor(const std::string& params)
+    : DoubleTerminalElement(params) {
+  while(line_stream) {
+    coordinate c;
+    line_stream >> c.first >> c.second;
+  }
+
+  std::sort(coordinates.begin(), coordinates.end());
+}
+
+const std::vector<NonLinearResistor::coordinate>&
+NonLinearResistor::get_coordinates() const {
+  return coordinates;
 }
 
 int NonLinearResistor::get_num_of_currents() const {
-  throw AMCircuitException("");
+  return 0;
 }
 
-void NonLinearResistor::place_stamp(const StampParameters& parameters) {
-  // TODO NonLinearResistor stamp
+void NonLinearResistor::place_stamp(const StampParameters& p) {
+  amc_float voltage = p.last_nr_trial[get_node1()]-p.last_nr_trial[get_node1()];
+
+  std::vector<coordinate>::iterator resistance_range =
+      std::lower_bound(coordinates.begin() + 1, coordinates.end(), voltage);
+  if(resistance_range == coordinates.end()) {
+    resistance_range = coordinates.end() - 1;
+  }
+  amc_float j1 = (resistance_range-1)->second;
+  amc_float j2 = resistance_range->second;
+  amc_float v1 = (resistance_range-1)->first;
+  amc_float v2 = resistance_range->first;
+  amc_float G = (j2 - j1)/(v2 - v1);
+  amc_float I = j2 - G * v2;
+
+  p.A[get_node1()][get_node1()] += G;
+  p.A[get_node2()][get_node2()] += G;
+  p.A[get_node1()][get_node2()] -= G;
+  p.A[get_node2()][get_node1()] -= G;
+  p.b[get_node1()] -= I;
+  p.b[get_node2()] += I;
 }
 
 VoltageControlledSwitch::VoltageControlledSwitch(
@@ -187,8 +216,15 @@ int VoltageControlledSwitch::get_num_of_currents() const {
   throw AMCircuitException("");
 }
 
-void VoltageControlledSwitch::place_stamp(const StampParameters& parameters) {
-  // TODO VoltageControlledSwitch stamp
+void VoltageControlledSwitch::place_stamp(const StampParameters& p) {
+  amc_float v_ctrl = p.last_nr_trial[get_node_ctrl_p()]
+                           - p.last_nr_trial[get_node_ctrl_n()];
+  amc_float G = v_ctrl < v_ref ? g_off : g_on;
+
+  p.A[get_node_p()][get_node_p()] += G;
+  p.A[get_node_n()][get_node_n()] += G;
+  p.A[get_node_p()][get_node_n()] -= G;
+  p.A[get_node_n()][get_node_p()] -= G;
 }
 
 Inductor::Inductor(const std::string& name, int node1, int node2, amc_float L,
