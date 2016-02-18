@@ -102,7 +102,7 @@ inline void CircuitSolver::add_solution(int index, amc_float time){
 inline bool converged(amc_float* last_solution, amc_float* new_solution,
                       const int system_size) {
   for (int i = 0; i < system_size; ++i) {
-    if (fabs(last_solution[i] - new_solution[i]) > ACCEPTABLE_NR_ERROR) {
+    if (std::abs(last_solution[i] - new_solution[i]) > ACCEPTABLE_NR_ERROR) {
       return false;
     }
   }
@@ -112,7 +112,7 @@ inline bool converged(amc_float* last_solution, amc_float* new_solution,
 inline void retry_initial(amc_float* last_solution, amc_float* new_solution,
                           const int system_size) {
   for (int i = 0; i < system_size; ++i) {
-    if (fabs(last_solution[i] - new_solution[i]) > ACCEPTABLE_NR_ERROR) {
+    if (std::abs(last_solution[i] - new_solution[i]) > ACCEPTABLE_NR_ERROR) {
       new_solution[i] = - MAX_NR_GUESS + static_cast <amc_float> (rand()) /
                            ( static_cast <amc_float> (RAND_MAX/(2.0*RAND_MAX)));
     }

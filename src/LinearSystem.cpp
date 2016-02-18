@@ -54,7 +54,7 @@ bool PII_LUDecomposition(amc_float** A, const int n, int* ri,const int first_ind
   for (int p = first_index+1; p <= n - 1; p++) {
     // Find pivot element.
     for (i = p + 1; i <= n; i++) {
-      if (fabs(A[ri[i - 1]][p - 1]) > fabs(A[ri[p - 1]][p - 1])) {
+      if (std::abs(A[ri[i - 1]][p - 1]) > std::abs(A[ri[p - 1]][p - 1])) {
         // Switch the index for the p-1 pivot row if necessary.
         int t = ri[p - 1];
         ri[p - 1] = ri[i - 1];
@@ -119,7 +119,7 @@ void solve_system(amc_float** A, amc_float* b_x, const int size) {
     t=0.0;
     a=i;
     for (l=i; l < size; l++) {
-      if (fabs(A[l][i])>fabs(t)) {
+      if (std::abs(A[l][i])>std::abs(t)) {
         a=l;
         t=A[l][i];
       }
@@ -134,7 +134,7 @@ void solve_system(amc_float** A, amc_float* b_x, const int size) {
       b_x[i]=b_x[a];
       b_x[a]=p;
     }
-    if (fabs(t) < 1e-9) {
+    if (std::abs(t) < 1e-9) {
       throw SingularSystem("System is singular, no solution.");
     }
 
