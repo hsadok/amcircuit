@@ -41,7 +41,7 @@ class CircuitSolver {
   int num_solution_samples;
   int system_size;
   amc_float** solutions;
-  StampParameters stamp_parameters;
+  StampParameters stamp_params;
 };
 
 }  // namespace amcircuit

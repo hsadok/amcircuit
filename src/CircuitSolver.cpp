@@ -29,10 +29,11 @@ CircuitSolver::CircuitSolver(Netlist* netlist)
 }
 
 CircuitSolver::~CircuitSolver() {
-  free_array(stamp_parameters.A, 2, system_size);
+  free_array(stamp_params.A, 2, system_size);
   free_array(solutions, 2, num_solution_samples);
-  free(stamp_parameters.b);
-  free(stamp_parameters.x);
+  free(stamp_params.b);
+  free(stamp_params.x);
+  free(stamp_params.last_nr_trial);
 }
 
 void CircuitSolver::write_to_stream(std::ostream& ostream) const {
@@ -94,7 +95,7 @@ inline void zero_matrix(amc_float** const matrix, const int size) {
 
 inline void CircuitSolver::add_solution(int index, amc_float time){
   solutions[index][0] = time;
-  memcpy(solutions[index] + 1, stamp_parameters.x + 1,
+  memcpy(solutions[index] + 1, stamp_params.x + 1,
          (system_size - 1) * sizeof(amc_float));
 }
 
@@ -113,9 +114,15 @@ inline void retry_initial(amc_float* last_solution, amc_float* new_solution,
   for (int i = 0; i < system_size; ++i) {
     if (fabs(last_solution[i] - new_solution[i]) > ACCEPTABLE_NR_ERROR) {
       new_solution[i] = - MAX_NR_GUESS + static_cast <amc_float> (rand()) /
-                           ( static_cast <amc_float> (RAND_MAX/(2*RAND_MAX)));
+                           ( static_cast <amc_float> (RAND_MAX/(2.0*RAND_MAX)));
     }
   }
+}
+
+inline void swap_vectors(amc_float*& a, amc_float*& b) {
+  amc_float* aux = a;
+  a = b;
+  b = aux;
 }
 
 void CircuitSolver::solve_circuit() {
@@ -126,31 +133,30 @@ void CircuitSolver::solve_circuit() {
     for (int j = 0; j < config.get_internal_steps(); ++j) {
       int iterations = 0;
       int ia_retries = 0;
+      stamp_params.new_nr_cycle = true;
       while (1) {
         update_circuit(inner_time);
-        solve_system(stamp_parameters.A, stamp_parameters.b, system_size);
+        solve_system(stamp_params.A, stamp_params.b, system_size);
 
-        // swapping vectors x and b, x will hold the current solution while b
-        // will hold the last
-        amc_float* last_solution = stamp_parameters.x;
-        stamp_parameters.x = stamp_parameters.b;
-        stamp_parameters.b = last_solution;
-
-        if (converged(last_solution, stamp_parameters.x, system_size)) {
+        if (converged(stamp_params.last_nr_trial, stamp_params.b, system_size)){
           break;
         }
 
         ++iterations;
         if (iterations > NEWTON_RAPHSON_CYCLE_LIMIT) {
+          iterations = 0;
           ++ia_retries;
-          retry_initial(last_solution, stamp_parameters.x, system_size);
+          retry_initial(stamp_params.last_nr_trial, stamp_params.b, system_size);
           if (ia_retries > NEWTON_RAPHSON_IA_RETRIES) {
             throw NewtonRaphsonFailed(to_str(
                   "Newton-Raphson failed to converge after "
                   << NEWTON_RAPHSON_IA_RETRIES << " initialization retries."));
           }
         }
+        swap_vectors(stamp_params.last_nr_trial, stamp_params.b);
+        stamp_params.new_nr_cycle = false;
       }
+      swap_vectors(stamp_params.x, stamp_params.b);
       inner_time += inner_step_s;
     }
     add_solution(i, t);
@@ -180,38 +186,40 @@ void CircuitSolver::prepare_circuit() {
   num_solution_samples =
       static_cast<int>(config.get_t_stop_s()/config.get_t_step_s()) + 1;
 
-  stamp_parameters.A = allocate_matrix(system_size);
-  stamp_parameters.b = allocate_vector(system_size);
-  stamp_parameters.x = allocate_vector(system_size);
+  stamp_params.A = allocate_matrix(system_size);
+  stamp_params.b = allocate_vector(system_size);
+  stamp_params.x = allocate_vector(system_size);
+  stamp_params.last_nr_trial = allocate_vector(system_size);
   solutions = allocate_matrix(num_solution_samples, system_size);
 
-  zero_vector(stamp_parameters.x, system_size);
+  zero_vector(stamp_params.x, system_size);
+  zero_vector(stamp_params.last_nr_trial, system_size);
 
-  stamp_parameters.method_order = config.get_admo_order();
-  stamp_parameters.step_s = config.get_t_step_s()/config.get_internal_steps();
-  stamp_parameters.use_ic = config.get_uic();
+  stamp_params.method_order = config.get_admo_order();
+  stamp_params.step_s = config.get_t_step_s()/config.get_internal_steps();
+  stamp_params.use_ic = config.get_uic();
 }
 
 void CircuitSolver::update_circuit(amc_float time) {
-  zero_matrix(stamp_parameters.A, system_size);
-  zero_vector(stamp_parameters.b, system_size);
+  zero_matrix(stamp_params.A, system_size);
+  zero_vector(stamp_params.b, system_size);
 
   std::vector<Element::Handler>& elements = netlist.get_elements();
   int next_line = system_size - num_extra_lines;
 
-  stamp_parameters.time = time;
+  stamp_params.time = time;
 
   for (unsigned i = 0; i != elements.size(); ++i) {
     int num_of_currents = elements[i]->get_num_of_currents();
     if (num_of_currents > 0) {
-      stamp_parameters.currents_position = next_line;
+      stamp_params.currents_position = next_line;
       next_line += num_of_currents;
     } else {
-      stamp_parameters.currents_position = -1;
+      stamp_params.currents_position = -1;
     }
-    elements[i]->place_stamp(stamp_parameters);
+    elements[i]->place_stamp(stamp_params);
   }
-  stamp_parameters.use_ic = false;
+  stamp_params.use_ic = false;
 }
 
 std::string CircuitSolver::get_variables_header() const {
