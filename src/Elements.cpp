@@ -144,7 +144,7 @@ NonLinearResistor::NonLinearResistor(const std::string& name, int node1,
                                      int node2,
                                      const std::vector<coordinate>& coordinates)
     : DoubleTerminalElement(name, node1, node2), coordinates(coordinates) {
-  std::sort(coordinates.begin(), coordinates.end());
+  std::sort(this->coordinates.begin(), this->coordinates.end());
 }
 
 NonLinearResistor::NonLinearResistor(const std::string& params)
@@ -152,6 +152,7 @@ NonLinearResistor::NonLinearResistor(const std::string& params)
   while(line_stream) {
     coordinate c;
     line_stream >> c.first >> c.second;
+    coordinates.push_back(c);
   }
 
   std::sort(coordinates.begin(), coordinates.end());
@@ -170,8 +171,9 @@ void NonLinearResistor::place_stamp(const StampParameters& p) {
   amc_float voltage = p.last_nr_trial[get_node1()]-p.last_nr_trial[get_node1()];
 
   std::vector<coordinate>::iterator resistance_range =
-      std::lower_bound(coordinates.begin() + 1, coordinates.end(), voltage);
-  if(resistance_range == coordinates.end()) {
+      std::lower_bound(coordinates.begin() + 1, coordinates.end(),
+                       coordinate(voltage, 0));
+  if (resistance_range == coordinates.end()) {
     resistance_range = coordinates.end() - 1;
   }
   amc_float j1 = (resistance_range-1)->second;
