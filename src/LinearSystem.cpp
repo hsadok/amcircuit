@@ -158,6 +158,7 @@ void solve_system(amc_float** A, amc_float* b_x, const int size) {
       }
     }
   }
+  b_x[0] = 0; // ground voltage should be 0
 }
 
 }  // namespace amcircuit
