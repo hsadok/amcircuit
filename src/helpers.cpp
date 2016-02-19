@@ -47,10 +47,12 @@ std::string str_upper(std::string str) {
 #else  // Assume Windows, gets rid of Windows mess
 #include <windows.h>
   std::string get_executable_path() {
-    wchar_t buffer[MAX_PATH];
-    GetModuleFileName( NULL, buffer, MAX_PATH );
-    string::size_type pos = string( buffer ).find_last_of( "\\/" );
-    return std::string( buffer ).substr( 0, pos);
+    HMODULE hModule = GetModuleHandleW(NULL);
+    char path[MAX_PATH];
+    GetModuleFileNameA(hModule, path, MAX_PATH);
+    std::string string_path = std::string(path);
+    std::string::size_type pos = string_path.find_last_of( "\\/" );
+    return string_path.substr( 0, pos);
   }
 #endif
 
