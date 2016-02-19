@@ -18,7 +18,7 @@ set (APPLICATION_VERSION_STRING "${APPLICATION_VERSION_MAJOR}.${APPLICATION_VERS
 #set (APPLICATION_VENDOR_NAME "Your Company")
 #set (APPLICATION_VENDOR_URL "yourcompany.com")
 #set (APPLICATION_ID "${APPLICATION_VENDOR_ID}.${PROJECT_NAME}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 if (APPLE)
     cmake_policy(SET CMP0042 NEW)
@@ -27,7 +27,7 @@ endif()
 #
 # Debugging Options
 #
-set (CMAKE_VERBOSE_MAKEFILE 1) # Use 1 for debugging, 0 for release
+set (CMAKE_VERBOSE_MAKEFILE 0) # Use 1 for debugging, 0 for release
 
 
 #
