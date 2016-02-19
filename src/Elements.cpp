@@ -151,10 +151,14 @@ NonLinearResistor::NonLinearResistor(const std::string& params)
     : DoubleTerminalElement(params) {
   while(line_stream) {
     coordinate c;
-    line_stream >> c.first >> c.second;
+    if (!(line_stream >> c.first)) {
+      break;
+    }
+    if (!(line_stream >> c.second)) {
+      break;
+    }
     coordinates.push_back(c);
   }
-
   std::sort(coordinates.begin(), coordinates.end());
 }
 
