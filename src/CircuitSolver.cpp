@@ -156,6 +156,7 @@ void CircuitSolver::solve_circuit() {
         swap_vectors(stamp_params.last_nr_trial, stamp_params.b);
         stamp_params.new_nr_cycle = false;
       }
+      stamp_params.use_ic = false;
       swap_vectors(stamp_params.x, stamp_params.b);
       inner_time += inner_step_s;
     }
@@ -219,7 +220,6 @@ void CircuitSolver::update_circuit(amc_float time) {
     }
     elements[i]->place_stamp(stamp_params);
   }
-  stamp_params.use_ic = false;
 }
 
 std::string CircuitSolver::get_variables_header() const {
