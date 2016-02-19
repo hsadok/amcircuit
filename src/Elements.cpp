@@ -168,8 +168,7 @@ int NonLinearResistor::get_num_of_currents() const {
 }
 
 void NonLinearResistor::place_stamp(const StampParameters& p) {
-  amc_float voltage = p.last_nr_trial[get_node1()]-p.last_nr_trial[get_node1()];
-
+  amc_float voltage = p.last_nr_trial[get_node1()]-p.last_nr_trial[get_node2()];
   std::vector<coordinate>::iterator resistance_range =
       std::lower_bound(coordinates.begin() + 1, coordinates.end(),
                        coordinate(voltage, 0));
@@ -215,7 +214,7 @@ amc_float VoltageControlledSwitch::get_v_ref() const {
 }
 
 int VoltageControlledSwitch::get_num_of_currents() const {
-  throw AMCircuitException("");
+  return 0;
 }
 
 void VoltageControlledSwitch::place_stamp(const StampParameters& p) {
@@ -349,8 +348,8 @@ void Capacitor::place_stamp(const StampParameters& p) {
     last_voltage = initial_voltage;
     past_currents[1] = past_currents[0] = last_current = 0;
     method_order = 1;
-    last_G = 0;
-    last_I = 0;
+    last_G = C/p.step_s;
+    last_I = last_G * last_voltage;
   } else {
     if(p.new_nr_cycle) {
       last_G = last_nr_G;
