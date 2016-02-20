@@ -30,9 +30,15 @@ int main(int argc, char const *argv[]) {
     output_file_name = argv[2];
   }
 
-  Netlist nl = Netlist(netlist_file_name);
-  CircuitSolver cs(&nl);
-  cs.write_to_file(output_file_name);
+  try {
+    Netlist nl = Netlist(netlist_file_name);
+    CircuitSolver cs(&nl);
+    cs.write_to_file(output_file_name);
+  } catch (const std::exception& e) {
+    std::cout << "Error: " << e.what() << std::endl;
+  }
+
+
 
   return 0;
 }
