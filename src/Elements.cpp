@@ -262,15 +262,16 @@ int Inductor::get_num_of_currents() const {
 }
 
 void Inductor::place_stamp(const StampParameters& p) {
-  amc_float last_current, last_voltage;
   int method_order = p.method_order;
   if (p.use_ic) {
     last_current = initial_current;
-    past_voltages[1] = past_voltages[0] = last_voltage = 0;
-    method_order = 1;
-  } else {
+    past_voltages[2] = past_voltages[1] = past_voltages[0] = 0;
+    //method_order = 0;
+  } else if(p.new_nr_cycle) {
+    past_voltages[2] = past_voltages[1];
+    past_voltages[1] = past_voltages[0];
+    past_voltages[0] = p.x[get_node1()] - p.x[get_node2()];
     last_current = p.x[p.currents_position];
-    last_voltage = p.x[get_node1()] - p.x[get_node2()];
   }
 
   // Modelled using a resistor in series with a voltage source
@@ -285,18 +286,19 @@ void Inductor::place_stamp(const StampParameters& p) {
     }
     case 2: {
       R = 2 * L/p.step_s;
-      V = R * last_current + last_voltage;
+      V = R * last_current + past_voltages[0];
       break;
     }
     case 3: {
       R = 12.0/5.0 * L/p.step_s;
-      V = R*last_current - 1.0/5.0 * past_voltages[0] + 8.0/5.0 * last_voltage;
+      V = R*last_current - 1.0/5.0 * past_voltages[1]
+          + 8.0/5.0 * past_voltages[0];
       break;
     }
     case 4: {
       R = 8.0/3.0 * L/p.step_s;
-      V = R * last_current + 1.0/9.0 * past_voltages[1]
-          - 5.0/9.0 * past_voltages[0] + 19.0/9.0 * last_voltage;
+      V = R * last_current + 1.0/9.0 * past_voltages[2]
+          - 5.0/9.0 * past_voltages[1] + 19.0/9.0 * past_voltages[0];
       break;
     }
     default: {
@@ -311,9 +313,6 @@ void Inductor::place_stamp(const StampParameters& p) {
   p.A[p.currents_position][get_node2()] += 1;
   p.A[p.currents_position][p.currents_position] += R;
   p.b[p.currents_position] += V;
-
-  past_voltages[1] = past_voltages[0];
-  past_voltages[0] = last_voltage;
 }
 
 Capacitor::Capacitor(const std::string& name, int node1, int node2, amc_float C,
@@ -346,21 +345,18 @@ int Capacitor::get_num_of_currents() const {
 }
 
 void Capacitor::place_stamp(const StampParameters& p) {
-  amc_float last_voltage, last_current;
   int method_order = p.method_order;
   if (p.use_ic) {
     last_voltage = initial_voltage;
-    past_currents[1] = past_currents[0] = last_current = 0;
-    method_order = 1;
+    past_currents[2] = past_currents[1] = past_currents[0] = 0;
+    //method_order = 0;
     last_G = C/p.step_s;
     last_I = last_G * last_voltage;
-  } else {
-    if(p.new_nr_cycle) {
-      last_G = last_nr_G;
-      last_I = last_nr_I;
-    }
+  } else if(p.new_nr_cycle) {
     last_voltage = p.x[get_node1()] - p.x[get_node2()];
-    last_current = last_G * last_voltage - last_I;
+    past_currents[2] = past_currents[1];
+    past_currents[1] = past_currents[0];
+    past_currents[0] = last_G * last_voltage - last_I;
   }
 
   //  Modeled using a conductance G in parallel with a current source I
@@ -375,18 +371,19 @@ void Capacitor::place_stamp(const StampParameters& p) {
     }
     case 2: {
       G = 2 * C/p.step_s;
-      I = G * last_voltage + last_current;
+      I = G * last_voltage + past_currents[0];
       break;
     }
     case 3: {
       G =  12.0/5.0*C/p.step_s;
-      I = G * last_voltage - 1.0/5.0 * past_currents[0] + 8.0/5.0*last_current;
+      I = G * last_voltage - 1.0/5.0 * past_currents[1]
+          + 8.0/5.0 * past_currents[0];
       break;
     }
     case 4: {
       G = 8.0/3.0*C/p.step_s;
-      I = G * last_voltage + 1.0/9.0 * past_currents[1]
-          - 5.0/9.0 * past_currents[0] + 19.0/9.0 * last_current;
+      I = G * last_voltage + 1.0/9.0 * past_currents[2]
+          - 5.0/9.0 * past_currents[1] + 19.0/9.0 * past_currents[0];
       break;
     }
     default: {
@@ -402,11 +399,8 @@ void Capacitor::place_stamp(const StampParameters& p) {
   p.b[get_node1()] += I;
   p.b[get_node2()] -= I;
 
-  last_nr_G = G;
-  last_nr_I = I;
-
-  past_currents[1] = past_currents[0];
-  past_currents[0] = last_current;
+  last_G = G;
+  last_I = I;
 }
 
 VoltageControlledVoltageSource::VoltageControlledVoltageSource(
