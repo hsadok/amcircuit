@@ -78,8 +78,8 @@ void Netlist::handle_line(const std::string& line) {
   } catch (const BadElementString& e) {
     throw BadFileException(to_str("Line: " << current_line <<
                                       " \"" << line << "\""));
-    current_line++;
   }
+  current_line++;
 }
 
 }  // namespace amcircuit
