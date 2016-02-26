@@ -36,7 +36,7 @@ std::string str_upper(std::string str) {
 #include <limits.h>
   std::string get_executable_path() {
     char buff[PATH_MAX];
-    ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
+    ssize_t len = readlink("/proc/self/exe", buff, sizeof(buff)-1);
     if (len == -1) {
       throw BufferTooSmall(to_str("need size: " << PATH_MAX << std::endl));
     }
