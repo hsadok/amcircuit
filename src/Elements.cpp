@@ -257,7 +257,9 @@ void VoltageControlledSwitch::place_stamp(const StampParameters& p) {
 Inductor::Inductor(const std::string& name, int node1, int node2, amc_float L,
                    amc_float initial_current)
     : DoubleTerminalElement(name, node1, node2), L(L),
-      initial_current(initial_current) { }
+      initial_current(initial_current) {
+  initialize();
+}
 
 Inductor::Inductor(const std::string& params) : DoubleTerminalElement(params),
                                                 initial_current(0) {
@@ -269,6 +271,11 @@ Inductor::Inductor(const std::string& params) : DoubleTerminalElement(params),
     }
     std::stringstream(ic_string.substr(3,std::string::npos)) >> initial_current;
   }
+  initialize();
+}
+
+void Inductor::initialize() {
+  past_voltages[2] = past_voltages[1] = past_voltages[0] = 0;
 }
 
 amc_float Inductor::get_L() const {
@@ -286,10 +293,10 @@ int Inductor::get_num_of_currents() const {
 void Inductor::place_stamp(const StampParameters& p) {
   int method_order = p.method_order;
   if (p.use_ic) {
-    last_current = initial_current;
-    past_voltages[2] = past_voltages[1] = past_voltages[0] = 0;
     method_order = 1;
-  } else if(p.new_nr_cycle) {
+    last_current = initial_current;
+  }
+  if(p.new_nr_cycle) {
     past_voltages[2] = past_voltages[1];
     past_voltages[1] = past_voltages[0];
     past_voltages[0] = p.x[get_node1()] - p.x[get_node2()];
@@ -340,7 +347,9 @@ void Inductor::place_stamp(const StampParameters& p) {
 Capacitor::Capacitor(const std::string& name, int node1, int node2, amc_float C,
                      amc_float initial_voltage)
     : DoubleTerminalElement(name, node1, node2), C(C),
-      initial_voltage(initial_voltage) { }
+      initial_voltage(initial_voltage) {
+  initialize();
+}
 
 Capacitor::Capacitor(const std::string& params)
     : DoubleTerminalElement(params), initial_voltage(0) {
@@ -352,6 +361,11 @@ Capacitor::Capacitor(const std::string& params)
     }
     std::stringstream(iv_string.substr(3,std::string::npos)) >> initial_voltage;
   }
+  initialize();
+}
+
+void Capacitor::initialize() {
+  past_currents[2] = past_currents[1] = past_currents[0] = 0;
 }
 
 amc_float Capacitor::get_C() const {
@@ -369,12 +383,10 @@ int Capacitor::get_num_of_currents() const {
 void Capacitor::place_stamp(const StampParameters& p) {
   int method_order = p.method_order;
   if (p.use_ic) {
-    last_voltage = initial_voltage;
-    past_currents[2] = past_currents[1] = past_currents[0] = 0;
     method_order = 1;
-    last_G = C/p.step_s;
-    last_I = last_G * last_voltage;
-  } else if(p.new_nr_cycle) {
+    last_voltage = initial_voltage;
+  }
+  if (p.new_nr_cycle) {
     last_voltage = p.x[get_node1()] - p.x[get_node2()];
     past_currents[2] = past_currents[1];
     past_currents[1] = past_currents[0];

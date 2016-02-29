@@ -92,10 +92,10 @@ inline void CircuitSolver::calculate_till_converge(const amc_float initial_time,
                                                    const amc_float time_step,
                                                    const int steps) {
   amc_float t = initial_time;
+  stamp_params.step_s = time_step/steps;
   for (int i = 0; i < steps; ++i) {
     int iterations = 0;
     int ia_retries = 0;
-    stamp_params.new_nr_cycle = true;
     while (1) {
       update_circuit(t);
       solve_system(stamp_params.A, stamp_params.b, system_size);
@@ -118,7 +118,7 @@ inline void CircuitSolver::calculate_till_converge(const amc_float initial_time,
       swap_vectors(stamp_params.last_nr_trial, stamp_params.b);
       stamp_params.new_nr_cycle = false;
     }
-    stamp_params.use_ic = false;
+    stamp_params.new_nr_cycle = true;
     swap_vectors(stamp_params.x, stamp_params.b);
     t += time_step;
   }
@@ -127,10 +127,17 @@ inline void CircuitSolver::calculate_till_converge(const amc_float initial_time,
 void CircuitSolver::solve_circuit() {
   amc_float t = 0;
   amc_float inner_step_s = config.get_t_step_s() / config.get_internal_steps();
-  for (int i = 0; i < num_solution_samples; ++i) {
+
+  stamp_params.use_ic = true;
+  stamp_params.new_nr_cycle = false;
+  calculate_till_converge(t, inner_step_s * IC_SCALING_STEP, NUM_STEPS_IC);
+  add_solution(0, t);
+
+  stamp_params.use_ic = false;
+  for (int i = 1; i < num_solution_samples; ++i) {
+    t += config.get_t_step_s();
     calculate_till_converge(t, inner_step_s, config.get_internal_steps());
     add_solution(i, t);
-    t += config.get_t_step_s();
   }
 }
 
@@ -166,7 +173,6 @@ void CircuitSolver::prepare_circuit() {
   solutions = allocate_matrix(num_solution_samples, system_size);
 
   stamp_params.method_order = config.get_admo_order();
-  stamp_params.step_s = config.get_t_step_s()/config.get_internal_steps();
   stamp_params.use_ic = config.get_uic();
 }
 

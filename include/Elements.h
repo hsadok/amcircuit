@@ -173,6 +173,7 @@ class Inductor : public DoubleTerminalElement {
   amc_float initial_current;
   amc_float past_voltages[3];
   amc_float last_current;
+  void initialize();
 };
 
 class Capacitor : public DoubleTerminalElement {
@@ -194,6 +195,7 @@ class Capacitor : public DoubleTerminalElement {
   amc_float last_voltage;
   amc_float last_G;
   amc_float last_I;
+  void initialize();
 };
 
 class VoltageControlledVoltageSource : public ControlledElement {
