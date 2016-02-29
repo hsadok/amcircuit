@@ -22,18 +22,16 @@ namespace amcircuit {
 
 
 CircuitSolver::CircuitSolver(Netlist* netlist)
-    : netlist(*netlist), config(find_first_tran_statement()) {
+    : netlist(*netlist), config(find_first_tran_statement()),
+      num_extra_lines(get_num_extra_lines()), system_size(get_system_size()),
+      stamp_params(system_size) {
   srand (static_cast<unsigned>(time(0)));
   prepare_circuit();
   solve_circuit();
 }
 
 CircuitSolver::~CircuitSolver() {
-  free_array(stamp_params.A, 2, system_size);
   free_array(solutions, 2, num_solution_samples);
-  free(stamp_params.b);
-  free(stamp_params.x);
-  free(stamp_params.last_nr_trial);
 }
 
 void CircuitSolver::write_to_stream(std::ostream& ostream) const {
@@ -56,41 +54,6 @@ void CircuitSolver::write_to_file(const std::string& file_name) const {
 
 void CircuitSolver::write_to_screen() const {
   write_to_stream(std::cout);
-}
-
-
-inline amc_float* allocate_vector(const int size) {
-  amc_float* vector;
-  if (!(vector = (amc_float*) malloc(sizeof(*vector) * size))) {
-    throw std::bad_alloc();
-  }
-  return vector;
-}
-
-inline amc_float** allocate_matrix(const int size1, const int size2) {
-  amc_float** matrix;
-  if (!(matrix = (amc_float**) malloc_array(sizeof(**matrix), 2, size1, size2))){
-    throw std::bad_alloc();
-  }
-  return matrix;
-}
-
-inline amc_float** allocate_matrix(const int size) {
-  return allocate_matrix(size, size);
-}
-
-inline void zero_vector(amc_float* const matrix, const int size) {
-  for (int i = 0; i < size; ++i) {
-    matrix[i]= 0;
-  }
-}
-
-inline void zero_matrix(amc_float** const matrix, const int size) {
-  for (int i = 0; i < size; ++i) {
-    for(int j = 0; j < size; ++j) {
-      matrix[i][j] = 0;
-    }
-  }
 }
 
 inline void CircuitSolver::add_solution(int index, amc_float time){
@@ -125,41 +88,47 @@ inline void swap_vectors(amc_float*& a, amc_float*& b) {
   b = aux;
 }
 
+inline void CircuitSolver::calculate_till_converge(const amc_float initial_time,
+                                                   const amc_float time_step,
+                                                   const int steps) {
+  amc_float t = initial_time;
+  for (int i = 0; i < steps; ++i) {
+    int iterations = 0;
+    int ia_retries = 0;
+    stamp_params.new_nr_cycle = true;
+    while (1) {
+      update_circuit(t);
+      solve_system(stamp_params.A, stamp_params.b, system_size);
+
+      if (converged(stamp_params.last_nr_trial, stamp_params.b, system_size)) {
+        break;
+      }
+
+      ++iterations;
+      if (iterations > NEWTON_RAPHSON_CYCLE_LIMIT) {
+        iterations = 0;
+        ++ia_retries;
+        retry_initial(stamp_params.last_nr_trial, stamp_params.b, system_size);
+        if (ia_retries > NEWTON_RAPHSON_IA_RETRIES) {
+          throw NewtonRaphsonFailed(to_str(
+                "Newton-Raphson failed to converge after "
+                << NEWTON_RAPHSON_IA_RETRIES << " initialization retries."));
+        }
+      }
+      swap_vectors(stamp_params.last_nr_trial, stamp_params.b);
+      stamp_params.new_nr_cycle = false;
+    }
+    stamp_params.use_ic = false;
+    swap_vectors(stamp_params.x, stamp_params.b);
+    t += time_step;
+  }
+}
+
 void CircuitSolver::solve_circuit() {
   amc_float t = 0;
   amc_float inner_step_s = config.get_t_step_s() / config.get_internal_steps();
   for (int i = 0; i < num_solution_samples; ++i) {
-    amc_float inner_time = t;
-    for (int j = 0; j < config.get_internal_steps(); ++j) {
-      int iterations = 0;
-      int ia_retries = 0;
-      stamp_params.new_nr_cycle = true;
-      while (1) {
-        update_circuit(inner_time);
-        solve_system(stamp_params.A, stamp_params.b, system_size);
-
-        if (converged(stamp_params.last_nr_trial, stamp_params.b, system_size)){
-          break;
-        }
-
-        ++iterations;
-        if (iterations > NEWTON_RAPHSON_CYCLE_LIMIT) {
-          iterations = 0;
-          ++ia_retries;
-          retry_initial(stamp_params.last_nr_trial, stamp_params.b, system_size);
-          if (ia_retries > NEWTON_RAPHSON_IA_RETRIES) {
-            throw NewtonRaphsonFailed(to_str(
-                  "Newton-Raphson failed to converge after "
-                  << NEWTON_RAPHSON_IA_RETRIES << " initialization retries."));
-          }
-        }
-        swap_vectors(stamp_params.last_nr_trial, stamp_params.b);
-        stamp_params.new_nr_cycle = false;
-      }
-      stamp_params.use_ic = false;
-      swap_vectors(stamp_params.x, stamp_params.b);
-      inner_time += inner_step_s;
-    }
+    calculate_till_converge(t, inner_step_s, config.get_internal_steps());
     add_solution(i, t);
     t += config.get_t_step_s();
   }
@@ -177,24 +146,24 @@ Tran& CircuitSolver::find_first_tran_statement() {
   throw IncompleteNetList("No analysis statement found on netlist");
 }
 
-void CircuitSolver::prepare_circuit() {
-  num_extra_lines = 0;
+int CircuitSolver::get_num_extra_lines() {
+  int num_extra_lines = 0;
   const std::vector<Element::Handler>& elements = netlist.get_elements();
   for(unsigned i = 0; i != elements.size(); ++i) {
     num_extra_lines += elements[i]->get_num_of_currents();
   }
-  system_size = 1 + netlist.get_number_of_nodes() + num_extra_lines;
+  return num_extra_lines;
+}
+
+int CircuitSolver::get_system_size() {
+  return 1 + netlist.get_number_of_nodes() + num_extra_lines;
+}
+
+void CircuitSolver::prepare_circuit() {
   num_solution_samples =
       static_cast<int>(config.get_t_stop_s()/config.get_t_step_s()) + 1;
 
-  stamp_params.A = allocate_matrix(system_size);
-  stamp_params.b = allocate_vector(system_size);
-  stamp_params.x = allocate_vector(system_size);
-  stamp_params.last_nr_trial = allocate_vector(system_size);
   solutions = allocate_matrix(num_solution_samples, system_size);
-
-  zero_vector(stamp_params.x, system_size);
-  zero_vector(stamp_params.last_nr_trial, system_size);
 
   stamp_params.method_order = config.get_admo_order();
   stamp_params.step_s = config.get_t_step_s()/config.get_internal_steps();

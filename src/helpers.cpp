@@ -150,6 +150,41 @@ void free_array_using_dimension_vector(void** ptr, unsigned num_dimension,
   free(ptr);
 }
 
+
+amc_float** allocate_matrix(const int size1, const int size2) {
+  amc_float** matrix;
+  if (!(matrix = (amc_float**) malloc_array(sizeof(**matrix), 2, size1, size2))){
+    throw std::bad_alloc();
+  }
+  return matrix;
+}
+
+amc_float** allocate_matrix(const int size) {
+  return allocate_matrix(size, size);
+}
+
+amc_float* allocate_vector(const int size) {
+  amc_float* vector;
+  if (!(vector = (amc_float*) malloc(sizeof(*vector) * size))) {
+    throw std::bad_alloc();
+  }
+  return vector;
+}
+
+void zero_vector(amc_float* const matrix, const int size) {
+  for (int i = 0; i < size; ++i) {
+    matrix[i]= 0;
+  }
+}
+
+void zero_matrix(amc_float** const matrix, const int size) {
+  for (int i = 0; i < size; ++i) {
+    for(int j = 0; j < size; ++j) {
+      matrix[i][j] = 0;
+    }
+  }
+}
+
 void print_matrix(amc_float **matrix, unsigned const size1, unsigned size2)
 {
   unsigned i, j;

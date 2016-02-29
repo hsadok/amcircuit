@@ -28,10 +28,20 @@ void* malloc_array(unsigned sizeof_param, unsigned num_dimension, ...);
 // C style function to free arrays allocated with malloc_array
 // You need to specify all the dimensions but the last in order to free the
 // array properly (If you specify the last it will be ignored anyway).
-// Example: Free the 3 dimension array (6x5x4)
+// Example: Allocate and free the 3 dimension array (6x5x4)
 // double*** A = malloc_array(sizeof(double), 3, 6, 5, 4)
 // free_array(A, 3, 6, 5);
 void free_array(void* ptr, unsigned num_dimension, ...);
+
+amc_float** allocate_matrix(const int size1, const int size2);
+
+amc_float** allocate_matrix(const int size);
+
+amc_float* allocate_vector(const int size);
+
+void zero_vector(amc_float* const matrix, const int size);
+
+void zero_matrix(amc_float** const matrix, const int size);
 
 void print_matrix(amc_float **matrix, unsigned const size1, unsigned size2 = 0);
 void print_vector(amc_float *vector, unsigned const size);

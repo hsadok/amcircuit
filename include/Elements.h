@@ -17,6 +17,9 @@
 namespace amcircuit {
 
 struct StampParameters {
+  StampParameters(int system_size);
+  ~StampParameters();
+
   amc_float** A;
   amc_float* x;
   amc_float* b;
@@ -28,6 +31,8 @@ struct StampParameters {
   bool new_nr_cycle;
   amc_float time;
   int currents_position;
+ private:
+  int system_size;
 };
 
 class Element {

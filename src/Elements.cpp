@@ -12,6 +12,28 @@
 
 namespace amcircuit {
 
+StampParameters::StampParameters(int system_size) : system_size(system_size) {
+  A = allocate_matrix(system_size);
+  b = allocate_vector(system_size);
+  x = allocate_vector(system_size);
+  last_nr_trial = allocate_vector(system_size);
+
+  zero_vector(x, system_size);
+  zero_vector(last_nr_trial, system_size);
+
+  method_order = 0;
+  use_ic = false;
+  new_nr_cycle = true;
+  time = 0;
+}
+
+StampParameters::~StampParameters() {
+  free_array(A, 2, system_size);
+  free(b);
+  free(x);
+  free(last_nr_trial);
+}
+
 Element::Element(const std::string& params) : line_stream(params) {
   line_stream >> name;
 }
@@ -266,7 +288,7 @@ void Inductor::place_stamp(const StampParameters& p) {
   if (p.use_ic) {
     last_current = initial_current;
     past_voltages[2] = past_voltages[1] = past_voltages[0] = 0;
-    //method_order = 0;
+    method_order = 1;
   } else if(p.new_nr_cycle) {
     past_voltages[2] = past_voltages[1];
     past_voltages[1] = past_voltages[0];
@@ -349,7 +371,7 @@ void Capacitor::place_stamp(const StampParameters& p) {
   if (p.use_ic) {
     last_voltage = initial_voltage;
     past_currents[2] = past_currents[1] = past_currents[0] = 0;
-    //method_order = 0;
+    method_order = 1;
     last_G = C/p.step_s;
     last_I = last_G * last_voltage;
   } else if(p.new_nr_cycle) {
