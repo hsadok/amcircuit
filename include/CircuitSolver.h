@@ -27,7 +27,11 @@ class CircuitSolver {
  private:
   Tran& find_first_tran_statement();
   void assembly_circuit();
+  int get_num_extra_lines();
+  int get_system_size();
   void prepare_circuit();
+  void calculate_till_converge(const amc_float initial_time,
+                               const amc_float time_step, const int steps);
   void solve_circuit();
   void update_circuit(amc_float time);
   inline void add_solution(int index, amc_float time);
@@ -38,10 +42,10 @@ class CircuitSolver {
   Netlist& netlist;
   Tran& config;
   int num_extra_lines;
-  int num_solution_samples;
   int system_size;
-  amc_float** solutions;
   StampParameters stamp_params;
+  int num_solution_samples;
+  amc_float** solutions;
 };
 
 }  // namespace amcircuit

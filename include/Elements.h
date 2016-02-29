@@ -17,6 +17,9 @@
 namespace amcircuit {
 
 struct StampParameters {
+  StampParameters(int system_size);
+  ~StampParameters();
+
   amc_float** A;
   amc_float* x;
   amc_float* b;
@@ -28,6 +31,8 @@ struct StampParameters {
   bool new_nr_cycle;
   amc_float time;
   int currents_position;
+ private:
+  int system_size;
 };
 
 class Element {
@@ -168,6 +173,7 @@ class Inductor : public DoubleTerminalElement {
   amc_float initial_current;
   amc_float past_voltages[3];
   amc_float last_current;
+  void initialize();
 };
 
 class Capacitor : public DoubleTerminalElement {
@@ -189,6 +195,7 @@ class Capacitor : public DoubleTerminalElement {
   amc_float last_voltage;
   amc_float last_G;
   amc_float last_I;
+  void initialize();
 };
 
 class VoltageControlledVoltageSource : public ControlledElement {
